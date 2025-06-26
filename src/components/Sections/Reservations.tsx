@@ -39,7 +39,7 @@ export const Reservations: React.FC = () => {
       case 'confirmed':
         return 'Confirmada';
       case 'pending':
-        return 'Pendiente de pago';
+        return 'Pendiente';
       case 'cancelled':
         return 'Cancelada';
       default:

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, Briefcase, FileText, CreditCard, Trophy, Building, Clock, Database } from 'lucide-react';
+import { Users, Briefcase, FileText, CreditCard, Trophy, Building, Clock, Database, UserCheck } from 'lucide-react';
 
 interface AdminSettingsProps {
   onSectionSelect: (section: string) => void;
@@ -15,24 +15,31 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSectionSelect })
       description: 'Gestionar empleados del sistema'
     },
     { 
+      id: 'clients', 
+      label: 'Clientes', 
+      icon: UserCheck, 
+      number: '6.2',
+      description: 'Ver clientes registrados y estadísticas'
+    },
+    { 
       id: 'positions', 
       label: 'Cargo', 
       icon: Briefcase, 
-      number: '6.2',
+      number: '6.3',
       description: 'Administrar cargos y roles'
     },
     { 
       id: 'sports', 
       label: 'Deportes', 
       icon: Trophy, 
-      number: '6.3',
+      number: '6.4',
       description: 'Configurar deportes disponibles'
     },
     { 
       id: 'document-types', 
       label: 'Tipo de Documento', 
       icon: FileText, 
-      number: '6.4',
+      number: '6.5',
       description: 'Tipos de documentos de identidad'
     },
     

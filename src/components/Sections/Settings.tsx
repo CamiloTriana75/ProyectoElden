@@ -3,6 +3,7 @@ import { Bell, Lock, Globe, Moon, Sun, Smartphone } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { AdminSettings } from '../Admin/AdminSettings';
 import { EmployeeManagement } from '../Admin/EmployeeManagement';
+import { ClientManagement } from '../Admin/ClientManagement';
 import { PositionManagement } from '../Admin/PositionManagement';
 import { DocumentTypeManagement } from '../Admin/DocumentTypeManagement';
 import { PaymentMethodManagement } from '../Admin/PaymentMethodManagement';
@@ -29,6 +30,9 @@ export const Settings: React.FC = () => {
   if (user?.role === 'admin' || user?.role === 'employee') {
     if (currentSection === 'employees') {
       return <EmployeeManagement onBack={() => setCurrentSection(null)} />;
+    }
+    if (currentSection === 'clients') {
+      return <ClientManagement onBack={() => setCurrentSection(null)} />;
     }
     if (currentSection === 'positions') {
       return <PositionManagement onBack={() => setCurrentSection(null)} />;
