@@ -138,7 +138,7 @@ export const Contact: React.FC = () => {
                     <div className="mb-2 text-gray-400 text-sm">Recibido: {new Date(selectedMessage.createdAt).toLocaleString()}</div>
                   </div>
                   <div className="flex justify-center gap-8 mt-8">
-                    <button className="bg-blue-600 text-white px-12 py-4 rounded-lg text-xl font-semibold hover:bg-blue-700 shadow-lg" onClick={() => window.alert('Consulta realizada (puedes personalizar esta acción)')}>Consultar</button>
+                   
                     <button className="bg-red-600 text-white px-12 py-4 rounded-lg text-xl font-semibold hover:bg-red-700 shadow-lg" onClick={() => deleteMessage(selectedMessage.id!)}>Eliminar Mensaje</button>
                   </div>
                 </>

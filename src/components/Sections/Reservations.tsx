@@ -8,7 +8,6 @@ export const Reservations: React.FC = () => {
   const { user } = useAuth();
   const { reservations, updateReservation } = useData();
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [sportFilter, setSportFilter] = useState<string>('all');
 
   // Filter reservations based on user role
   const isAdmin = user?.role === 'admin';
@@ -19,8 +18,7 @@ export const Reservations: React.FC = () => {
 
   const filteredReservations = userReservations.filter(reservation => {
     const matchesStatus = statusFilter === 'all' || reservation.status === statusFilter;
-    const matchesSport = sportFilter === 'all' || reservation.sportName.toLowerCase() === sportFilter;
-    return matchesStatus && matchesSport;
+    return matchesStatus;
   });
 
   const getStatusIcon = (status: string) => {
@@ -133,61 +131,6 @@ export const Reservations: React.FC = () => {
               />
               <label htmlFor="cancelled" className="text-red-200 text-sm">Canceladas</label>
             </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="all-sports"
-                name="sport"
-                checked={sportFilter === 'all'}
-                onChange={() => setSportFilter('all')}
-                className="text-blue-500"
-              />
-              <label htmlFor="all-sports" className="text-blue-200 text-sm">Todos</label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="futbol"
-                name="sport"
-                checked={sportFilter === 'fútbol'}
-                onChange={() => setSportFilter('fútbol')}
-                className="text-green-500"
-              />
-              <label htmlFor="futbol" className="text-green-200 text-sm">Fútbol</label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="padel"
-                name="sport"
-                checked={sportFilter === 'pádel'}
-                onChange={() => setSportFilter('pádel')}
-                className="text-blue-500"
-              />
-              <label htmlFor="padel" className="text-blue-200 text-sm">Pádel</label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="baloncesto"
-                name="sport"
-                checked={sportFilter === 'baloncesto'}
-                onChange={() => setSportFilter('baloncesto')}
-                className="text-orange-500"
-              />
-              <label htmlFor="baloncesto" className="text-orange-200 text-sm">Baloncesto</label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="tenis"
-                name="sport"
-                checked={sportFilter === 'tenis'}
-                onChange={() => setSportFilter('tenis')}
-                className="text-yellow-500"
-              />
-              <label htmlFor="tenis" className="text-yellow-200 text-sm">Tenis</label>
-            </div>
           </div>
         </div>
       </div>
@@ -200,10 +143,10 @@ export const Reservations: React.FC = () => {
                 {(isAdmin || isEmployee) && (
                   <th className="px-6 py-4 text-left text-white font-medium">Usuario</th>
                 )}
-                <th className="px-6 py-4 text-left text-white font-medium">Deporte</th>
-                <th className="px-6 py-4 text-left text-white font-medium">Cancha</th>
-                <th className="px-6 py-4 text-left text-white font-medium">Hora De Reserva</th>
-                <th className="px-6 py-4 text-left text-white font-medium">Fecha de reserva</th>
+                <th className="px-6 py-4 text-left text-white font-medium">Cancha ID</th>
+                <th className="px-6 py-4 text-left text-white font-medium">Fecha</th>
+                <th className="px-6 py-4 text-left text-white font-medium">Hora Inicio</th>
+                <th className="px-6 py-4 text-left text-white font-medium">Hora Fin</th>
                 <th className="px-6 py-4 text-left text-white font-medium">Precio</th>
                 <th className="px-6 py-4 text-left text-white font-medium">Estado</th>
                 <th className="px-6 py-4 text-right text-white font-medium">Acción</th>
@@ -220,10 +163,10 @@ export const Reservations: React.FC = () => {
                       </div>
                     </td>
                   )}
-                  <td className="px-6 py-4 text-white">{reservation.sportName}</td>
-                  <td className="px-6 py-4 text-green-300">{reservation.fieldName}</td>
-                  <td className="px-6 py-4 text-green-300">{reservation.timeSlot}</td>
+                  <td className="px-6 py-4 text-white">{reservation.fieldId}</td>
                   <td className="px-6 py-4 text-green-300">{reservation.date}</td>
+                  <td className="px-6 py-4 text-green-300">{reservation.startTime}</td>
+                  <td className="px-6 py-4 text-green-300">{reservation.endTime}</td>
                   <td className="px-6 py-4 text-green-300">${reservation.totalPrice}</td>
                   <td className="px-6 py-4">
                     <div className={`flex items-center gap-2 ${getStatusColor(reservation.status)}`}>
@@ -237,14 +180,14 @@ export const Reservations: React.FC = () => {
                       reservation.status === 'pending' ? (
                         <div className="flex gap-2 justify-end">
                           <button 
-                            onClick={() => handleApproveReservation(reservation.id)}
+                            onClick={() => handleApproveReservation(reservation.id!)}
                             className="bg-green-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-green-700 transition-colors flex items-center gap-1"
                           >
                             <Check className="w-3 h-3" />
                             Aprobar
                           </button>
                           <button 
-                            onClick={() => handleRejectReservation(reservation.id)}
+                            onClick={() => handleRejectReservation(reservation.id!)}
                             className="bg-red-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-700 transition-colors flex items-center gap-1"
                           >
                             <X className="w-3 h-3" />
@@ -260,7 +203,7 @@ export const Reservations: React.FC = () => {
                       // User actions
                       (reservation.status === 'pending' || reservation.status === 'confirmed') && (
                         <button 
-                          onClick={() => handleCancelReservation(reservation.id)}
+                          onClick={() => handleCancelReservation(reservation.id!)}
                           className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 transition-colors"
                         >
                           CANCELAR RESERVA
