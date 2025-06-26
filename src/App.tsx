@@ -128,7 +128,7 @@ function AppContent() {
     if (isEmployee) {
       switch (activeSection) {
         case 'inicio':
-          return <Home />;
+          return <Home onSectionChange={handleSectionChange} />;
         case 'reservas':
           return <Reservations />;
         case 'reportes':
@@ -138,14 +138,14 @@ function AppContent() {
         case 'contacto':
           return <Contact />;
         default:
-          return <Home />;
+          return <Home onSectionChange={handleSectionChange} />;
       }
     }
 
     // Regular users can access all sections except reports
     switch (activeSection) {
       case 'inicio':
-        return <Home />;
+        return <Home onSectionChange={handleSectionChange} />;
       case 'canchas':
         switch (bookingFlow) {
           case 'sport-selection':
@@ -177,7 +177,7 @@ function AppContent() {
       case 'ajustes':
         return <Settings />;
       default:
-        return <Home />;
+        return <Home onSectionChange={handleSectionChange} />;
     }
   };
 

@@ -1,7 +1,15 @@
 import React from 'react';
 import { Calendar, Users, Trophy, Clock } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
-export const Home: React.FC = () => {
+interface HomeProps {
+  onSectionChange?: (section: string) => void;
+}
+
+export const Home: React.FC<HomeProps> = ({ onSectionChange }) => {
+  const { user } = useAuth();
+  const isEmployee = user?.role === 'employee';
+
   return (
     <div className="p-8 max-w-6xl mx-auto">
       <div className="text-center mb-12">
@@ -54,10 +62,18 @@ export const Home: React.FC = () => {
           Accede a nuestro sistema de reservas y disfruta de las mejores instalaciones deportivas
         </p>
         <div className="flex justify-center gap-4">
-          <button className="bg-green-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors">
-            Ver Canchas Disponibles
-          </button>
-          <button className="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+          {!isEmployee && (
+            <button
+              className="bg-green-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+              onClick={() => onSectionChange && onSectionChange('canchas')}
+            >
+              Ver Canchas Disponibles
+            </button>
+          )}
+          <button
+            className={`bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors ${isEmployee ? 'mx-auto block' : ''}`}
+            onClick={() => onSectionChange && onSectionChange('reservas')}
+          >
             Mis Reservas
           </button>
         </div>
