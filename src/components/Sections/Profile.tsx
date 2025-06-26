@@ -1,15 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { User, Mail, Phone, Calendar, Edit2, Save, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useData } from '../../contexts/DataContext';
 
 export const Profile: React.FC = () => {
   const { user } = useAuth();
+  const { reservations } = useData();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
     phone: user?.phone || '',
   });
+
+  // Estadísticas de reservas del usuario
+  const stats = useMemo(() => {
+    if (!user) return { total: 0, month: 0, favorite: '-' };
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    // Solo reservas del usuario
+    const userReservations = (reservations as any[]).filter(r => r.userId === user.id);
+    // Reservas este mes
+    const monthReservations = userReservations.filter(r => {
+      const resDate = new Date(r.date);
+      return resDate.getMonth() === currentMonth && resDate.getFullYear() === currentYear;
+    });
+    // Deporte favorito
+    const sportCount: Record<string, number> = {};
+    userReservations.forEach(r => {
+      if (r.sportName) {
+        sportCount[r.sportName] = (sportCount[r.sportName] || 0) + 1;
+      }
+    });
+    let favorite = '-';
+    let max = 0;
+    Object.entries(sportCount).forEach(([sport, count]) => {
+      if (count > max) {
+        favorite = sport;
+        max = count;
+      }
+    });
+    return {
+      total: userReservations.length,
+      month: monthReservations.length,
+      favorite
+    };
+  }, [reservations, user]);
 
   const handleSave = () => {
     // Here you would typically make an API call to update the user profile
@@ -148,15 +185,15 @@ export const Profile: React.FC = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="text-center">
-            <div className="text-3xl font-bold text-green-400 mb-2">12</div>
+            <div className="text-3xl font-bold text-green-400 mb-2">{stats.total}</div>
             <p className="text-gray-300">Reservas Totales</p>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-blue-400 mb-2">8</div>
+            <div className="text-3xl font-bold text-blue-400 mb-2">{stats.month}</div>
             <p className="text-gray-300">Reservas Este Mes</p>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-yellow-400 mb-2">Fútbol</div>
+            <div className="text-3xl font-bold text-yellow-400 mb-2">{stats.favorite}</div>
             <p className="text-gray-300">Deporte Favorito</p>
           </div>
         </div>

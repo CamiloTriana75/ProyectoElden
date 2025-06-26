@@ -45,8 +45,8 @@ function AppContent() {
       return;
     }
     
-    // Employee can access home, reservations, reports, and settings
-    if (isEmployee && !['inicio', 'reservas', 'reportes', 'ajustes'].includes(section)) {
+    // Employee puede acceder a inicio, reservas, reportes, contacto y ajustes
+    if (isEmployee && !['inicio', 'reservas', 'reportes', 'contacto', 'ajustes'].includes(section)) {
       return;
     }
     
@@ -135,6 +135,8 @@ function AppContent() {
           return <Reports />;
         case 'ajustes':
           return <Settings />;
+        case 'contacto':
+          return <Contact />;
         default:
           return <Home />;
       }

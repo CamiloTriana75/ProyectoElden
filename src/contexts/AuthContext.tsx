@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User } from '../types';
-import { db } from '../services/database';
+import { AuthService, DatabaseService, User } from '../services/firebase';
 
 interface AuthContextType {
   user: User | null;
@@ -20,39 +19,52 @@ export const useAuth = () => {
   return context;
 };
 
-// Extend User type to include password
-interface UserWithPassword extends User {
-  password: string;
-}
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    console.log('🔧 Initializing AuthContext...');
+    
     const initializeAuth = async () => {
       try {
-        await db.init();
+        // Inicializar datos por defecto
+        await DatabaseService.initializeDefaultData();
         
-        // Check if we have a saved user session
-        const savedUser = localStorage.getItem('elden_user');
-        if (savedUser) {
-          const parsedUser = JSON.parse(savedUser);
-          // Verify user still exists in database
-          const userExists = await db.get('users', parsedUser.id);
-          if (userExists) {
-            setUser(parsedUser);
+        // Crear usuarios por defecto para iniciar sesión
+        await DatabaseService.createDefaultUsers();
+        
+        // Escuchar cambios en el estado de autenticación
+        const unsubscribe = AuthService.onAuthStateChanged(async (firebaseUser) => {
+          console.log('👤 Auth state changed:', firebaseUser?.email);
+          
+          if (firebaseUser) {
+            try {
+              // Obtener datos del usuario desde Firestore
+              const userData = await DatabaseService.getUserByEmail(firebaseUser.email!);
+              if (userData) {
+                console.log('✅ User data retrieved:', userData);
+                setUser(userData);
+              } else {
+                console.log('⚠️ User not found in Firestore, logging out');
+                await AuthService.logout();
+                setUser(null);
+              }
+            } catch (error) {
+              console.error('❌ Error getting user data:', error);
+              setUser(null);
+            }
           } else {
-            localStorage.removeItem('elden_user');
+            console.log('👤 No user logged in');
+            setUser(null);
           }
-        }
-        
-        // Initialize default admin and employee if they don't exist
-        await initializeDefaultUsers();
-        
-        setIsLoading(false);
+          
+          setIsLoading(false);
+        });
+
+        return unsubscribe;
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        console.error('❌ Error initializing auth:', error);
         setIsLoading(false);
       }
     };
@@ -60,139 +72,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeAuth();
   }, []);
 
-  const initializeDefaultUsers = async () => {
-    try {
-      console.log('Initializing default users...');
-      const users = await db.getAll('users') as UserWithPassword[];
-      console.log('Current users in database:', users.length);
-      
-      // Create default admin if doesn't exist
-      const adminExists = users.find((u: UserWithPassword) => u.email === 'admin@elden.com');
-      if (!adminExists) {
-        console.log('Creating default admin...');
-        const adminUser: UserWithPassword = {
-          id: 'admin',
-          name: 'Administrador',
-          email: 'admin@elden.com',
-          password: 'admin123', // In production, this should be hashed
-          phone: '+57 300 123 4567',
-          role: 'admin'
-        };
-        await db.add('users', adminUser);
-        console.log('Default admin created');
-      } else {
-        console.log('Default admin already exists');
-      }
-      
-      // Create default employee if doesn't exist
-      const employeeExists = users.find((u: UserWithPassword) => u.email === 'empleado@elden.com');
-      if (!employeeExists) {
-        console.log('Creating default employee...');
-        const employeeUser: UserWithPassword = {
-          id: 'empleado',
-          name: 'Empleado',
-          email: 'empleado@elden.com',
-          password: 'empleado123', // In production, this should be hashed
-          phone: '+57 300 987 6543',
-          role: 'employee'
-        };
-        await db.add('users', employeeUser);
-        console.log('Default employee created');
-      } else {
-        console.log('Default employee already exists');
-      }
-      
-      // Log final state
-      const finalUsers = await db.getAll('users') as UserWithPassword[];
-      console.log('Final users in database:', finalUsers.length);
-      console.log('User emails:', finalUsers.map(u => u.email));
-      
-    } catch (error) {
-      console.error('Error initializing default users:', error);
-    }
-  };
-
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      // Get all users from database
-      const users = await db.getAll('users') as UserWithPassword[];
+      console.log('🚀 Attempting login for:', email);
       
-      // Find user by email
-      const user = users.find(u => u.email === email);
+      // Intentar login con Firebase Auth
+      await AuthService.login(email, password);
       
-      if (!user) {
-        return false; // User not found
-      }
-      
-      // Check password (in production, this should be hashed comparison)
-      if (user.password !== password) {
-        return false; // Wrong password
-      }
-      
-      // Remove password from user object before setting state
-      const { password: _, ...userWithoutPassword } = user;
-      
-      setUser(userWithoutPassword);
-      localStorage.setItem('elden_user', JSON.stringify(userWithoutPassword));
+      console.log('✅ Login successful');
       return true;
       
     } catch (error) {
-      console.error('Error during login:', error);
+      console.error('❌ Login failed:', error);
       return false;
     }
   };
 
   const register = async (name: string, email: string, password: string, phone: string, documentType?: string, documentNumber?: string): Promise<boolean> => {
     try {
-      console.log('Starting registration for:', email);
+      console.log('🚀 Starting registration for:', email);
+      console.log('📝 Registration data:', { name, email, phone, documentType, documentNumber });
       
-      // Check if user already exists
-      const users = await db.getAll('users') as UserWithPassword[];
-      console.log('Current users in database:', users.length);
-      console.log('Existing users:', users.map(u => u.email));
-      
-      const existingUser = users.find(u => u.email === email);
-      
+      // Verificar si el usuario ya existe
+      const existingUser = await DatabaseService.getUserByEmail(email);
       if (existingUser) {
-        console.log('User already exists:', email);
-        return false; // User already exists
+        console.log('⚠️ User already exists:', email);
+        return false;
       }
       
-      console.log('Creating new user:', email);
-      
-      // Create new user
-      const newUser: UserWithPassword = {
-        id: Date.now().toString(),
+      // Crear usuario en Firebase Auth y Firestore
+      const userData: Omit<User, 'id' | 'createdAt'> = {
         name,
         email,
-        password, // In production, this should be hashed
         phone,
         documentType,
         documentNumber,
         role: 'client'
       };
       
-      // Save to database
-      await db.add('users', newUser);
-      console.log('User saved to database successfully');
+      const newUser = await AuthService.register(email, password, userData);
+      console.log('✅ Registration successful:', newUser);
       
-      // Remove password from user object before setting state
-      const { password: _, ...userWithoutPassword } = newUser;
-      
-      setUser(userWithoutPassword);
-      localStorage.setItem('elden_user', JSON.stringify(userWithoutPassword));
-      console.log('Registration completed successfully');
       return true;
       
     } catch (error) {
-      console.error('Error during registration:', error);
+      console.error('❌ Registration failed:', error);
       return false;
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('elden_user');
+  const logout = async () => {
+    try {
+      console.log('🚪 Logging out...');
+      await AuthService.logout();
+      setUser(null);
+      console.log('✅ Logout successful');
+    } catch (error) {
+      console.error('❌ Logout failed:', error);
+    }
   };
 
   return (

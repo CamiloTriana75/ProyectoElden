@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Employee, Position, DocumentType, PaymentMethod, Sport, Field, TimeSlot, Reservation } from '../types';
-import { db } from '../services/database';
+import { DatabaseService, Employee, Position, DocumentType, PaymentMethod, Sport, Field, TimeSlot, Reservation } from '../services/firebase';
 import LoadingSpinner from '../components/Layout/LoadingSpinner';
 
 interface DataContextType {
@@ -12,33 +11,33 @@ interface DataContextType {
   
   // Positions
   positions: Position[];
-  addPosition: (position: Omit<Position, 'id' | 'createdAt'>) => void;
-  updatePosition: (id: string, position: Partial<Position>) => void;
-  deletePosition: (id: string) => void;
+  addPosition: (position: Omit<Position, 'id' | 'createdAt'>) => Promise<void>;
+  updatePosition: (id: string, position: Partial<Position>) => Promise<void>;
+  deletePosition: (id: string) => Promise<void>;
   
   // Document Types
   documentTypes: DocumentType[];
-  addDocumentType: (docType: Omit<DocumentType, 'id' | 'createdAt'>) => void;
-  updateDocumentType: (id: string, docType: Partial<DocumentType>) => void;
-  deleteDocumentType: (id: string) => void;
+  addDocumentType: (docType: Omit<DocumentType, 'id' | 'createdAt'>) => Promise<void>;
+  updateDocumentType: (id: string, docType: Partial<DocumentType>) => Promise<void>;
+  deleteDocumentType: (id: string) => Promise<void>;
   
   // Payment Methods
   paymentMethods: PaymentMethod[];
-  addPaymentMethod: (method: Omit<PaymentMethod, 'id' | 'createdAt'>) => void;
-  updatePaymentMethod: (id: string, method: Partial<PaymentMethod>) => void;
-  deletePaymentMethod: (id: string) => void;
+  addPaymentMethod: (method: Omit<PaymentMethod, 'id' | 'createdAt'>) => Promise<void>;
+  updatePaymentMethod: (id: string, method: Partial<PaymentMethod>) => Promise<void>;
+  deletePaymentMethod: (id: string) => Promise<void>;
   
   // Sports
   sports: Sport[];
-  addSport: (sport: Sport) => void;
-  updateSport: (id: string, sport: Partial<Sport>) => void;
-  deleteSport: (id: string) => void;
+  addSport: (sport: Sport) => Promise<void>;
+  updateSport: (id: string, sport: Partial<Sport>) => Promise<void>;
+  deleteSport: (id: string) => Promise<void>;
   
   // Fields
   fields: Field[];
-  addField: (field: Field) => void;
-  updateField: (id: string, field: Partial<Field>) => void;
-  deleteField: (id: string) => void;
+  addField: (field: Field) => Promise<void>;
+  updateField: (id: string, field: Partial<Field>) => Promise<void>;
+  deleteField: (id: string) => Promise<void>;
   
   // Time Slots
   timeSlots: TimeSlot[];
@@ -65,132 +64,6 @@ export const useData = () => {
   return context;
 };
 
-const STORAGE_KEYS = {
-  employees: 'elden_employees',
-  positions: 'elden_positions',
-  documentTypes: 'elden_document_types',
-  paymentMethods: 'elden_payment_methods',
-  sports: 'elden_sports',
-  fields: 'elden_fields',
-  timeSlots: 'elden_time_slots',
-  reservations: 'elden_reservations'
-};
-
-// Initial data
-const initialPositions: Position[] = [
-  { id: '1', name: 'Administrador', description: 'Administrador general', createdAt: new Date().toISOString() },
-  { id: '2', name: 'Profesor de fútbol', description: 'Instructor de fútbol', createdAt: new Date().toISOString() },
-  { id: '3', name: 'Recepcionista', description: 'Atención al cliente', createdAt: new Date().toISOString() },
-  { id: '4', name: 'Mantenimiento', description: 'Mantenimiento de instalaciones', createdAt: new Date().toISOString() }
-];
-
-const initialDocumentTypes: DocumentType[] = [
-  { id: '1', name: 'Cédula de ciudadanía', code: 'CC', createdAt: new Date().toISOString() },
-  { id: '2', name: 'Tarjeta de identidad', code: 'TI', createdAt: new Date().toISOString() },
-  { id: '3', name: 'Cédula de extranjería', code: 'CE', createdAt: new Date().toISOString() },
-  { id: '4', name: 'Pasaporte', code: 'PA', createdAt: new Date().toISOString() }
-];
-
-const initialPaymentMethods: PaymentMethod[] = [
-  { id: '1', name: 'Efectivo', description: 'Pago en efectivo', isActive: true, createdAt: new Date().toISOString() },
-  { id: '2', name: 'Tarjeta de crédito', description: 'Pago con tarjeta de crédito', isActive: true, createdAt: new Date().toISOString() },
-  { id: '3', name: 'Tarjeta débito', description: 'Pago con tarjeta débito', isActive: true, createdAt: new Date().toISOString() },
-  { id: '4', name: 'Transferencia bancaria', description: 'Transferencia electrónica', isActive: true, createdAt: new Date().toISOString() },
-  { id: '5', name: 'PSE', description: 'Pagos Seguros en Línea', isActive: true, createdAt: new Date().toISOString() }
-];
-
-const initialSports: Sport[] = [
-  { id: 'futbol', name: 'Fútbol', icon: '⚽', color: 'bg-green-500' },
-  { id: 'baloncesto', name: 'Baloncesto', icon: '🏀', color: 'bg-orange-500' },
-  { id: 'tenis', name: 'Tenis', icon: '🎾', color: 'bg-yellow-500' },
-  { id: 'padel', name: 'Pádel', icon: '🏓', color: 'bg-blue-500' }
-];
-
-const initialFields: Field[] = [
-  // Fútbol
-  {
-    id: 'futbol-1',
-    name: 'Cancha Sintética 1',
-    sportId: 'futbol',
-    description: 'Cancha de fútbol 7 con césped artificial de alta calidad. Iluminación LED y zonas de descanso',
-    image: 'https://images.pexels.com/photos/274506/pexels-photo-274506.jpeg',
-    features: ['Césped artificial', 'Iluminación LED', 'Zonas de descanso', 'Vestuarios'],
-    pricePerHour: 50
-  },
-  {
-    id: 'futbol-2',
-    name: 'Cancha Sintética 2',
-    sportId: 'futbol',
-    description: 'Cancha de fútbol 5 con césped artificial de media calidad, sin iluminación y zonas de descanso',
-    image: 'https://images.pexels.com/photos/1171084/pexels-photo-1171084.jpeg',
-    features: ['Césped artificial', 'Zonas de descanso'],
-    pricePerHour: 35
-  },
-  // Baloncesto
-  {
-    id: 'baloncesto-1',
-    name: 'Cancha Principal',
-    sportId: 'baloncesto',
-    description: 'Cancha profesional de baloncesto con superficie acrílica y tableros de cristal',
-    image: 'https://images.pexels.com/photos/1752757/pexels-photo-1752757.jpeg',
-    features: ['Superficie acrílica', 'Tableros de cristal', 'Iluminación LED', 'Gradas'],
-    pricePerHour: 40
-  },
-  {
-    id: 'baloncesto-2',
-    name: 'Cancha Secundaria',
-    sportId: 'baloncesto',
-    description: 'Cancha de entrenamiento con superficie de concreto y tableros estándar',
-    image: 'https://images.pexels.com/photos/1080675/pexels-photo-1080675.jpeg',
-    features: ['Superficie de concreto', 'Tableros estándar', 'Iluminación básica'],
-    pricePerHour: 25
-  },
-  // Tenis
-  {
-    id: 'tenis-1',
-    name: 'Cancha Clay Court',
-    sportId: 'tenis',
-    description: 'Cancha profesional de tenis con superficie de arcilla y red oficial',
-    image: 'https://images.pexels.com/photos/209977/pexels-photo-209977.jpeg',
-    features: ['Superficie de arcilla', 'Red oficial', 'Iluminación nocturna', 'Bancos'],
-    pricePerHour: 45
-  },
-  {
-    id: 'tenis-2',
-    name: 'Cancha Hard Court',
-    sportId: 'tenis',
-    description: 'Cancha de tenis con superficie dura y equipamiento completo',
-    image: 'https://images.pexels.com/photos/1325735/pexels-photo-1325735.jpeg',
-    features: ['Superficie dura', 'Red oficial', 'Iluminación LED'],
-    pricePerHour: 35
-  },
-  // Pádel
-  {
-    id: 'padel-1',
-    name: 'Cancha Premium',
-    sportId: 'padel',
-    description: 'Cancha de pádel con cristales panorámicos y césped artificial premium',
-    image: 'https://images.pexels.com/photos/8007497/pexels-photo-8007497.jpeg',
-    features: ['Cristales panorámicos', 'Césped artificial premium', 'Iluminación LED', 'Vestuarios'],
-    pricePerHour: 55
-  },
-  {
-    id: 'padel-2',
-    name: 'Cancha Estándar',
-    sportId: 'padel',
-    description: 'Cancha de pádel estándar con paredes de ladrillo y césped artificial',
-    image: 'https://images.pexels.com/photos/6203541/pexels-photo-6203541.jpeg',
-    features: ['Paredes de ladrillo', 'Césped artificial', 'Iluminación básica'],
-    pricePerHour: 40
-  }
-];
-
-// Sample time slots data - Empty array, employees will configure their own
-const initialTimeSlots: TimeSlot[] = [];
-
-// Sample reservations data - Empty array to start with clean data
-const initialReservations: Reservation[] = [];
-
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // State declarations
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -204,12 +77,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    console.log('🔧 Initializing DataContext...');
+    
     const initializeData = async () => {
       try {
-        // Inicializar la base de datos
-        await db.init();
-        
-        // Cargar datos desde IndexedDB
+        // Cargar datos iniciales
         const [
           dbEmployees,
           dbPositions,
@@ -220,115 +92,57 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           dbTimeSlots,
           dbReservations
         ] = await Promise.all([
-          db.getEmployees(),
-          db.getPositions(),
-          db.getDocumentTypes(),
-          db.getPaymentMethods(),
-          db.getSports(),
-          db.getFields(),
-          db.getTimeSlots(),
-          db.getReservations()
+          DatabaseService.getAll<Employee>('employees'),
+          DatabaseService.getAll<Position>('positions'),
+          DatabaseService.getAll<DocumentType>('documentTypes'),
+          DatabaseService.getAll<PaymentMethod>('paymentMethods'),
+          DatabaseService.getAll<Sport>('sports'),
+          DatabaseService.getAll<Field>('fields'),
+          DatabaseService.getAll<TimeSlot>('timeSlots'),
+          DatabaseService.getReservations()
         ]);
 
-        // Establecer datos cargados
-        setEmployees(dbEmployees as Employee[]);
-        setPositions(dbPositions.length > 0 ? dbPositions as Position[] : initialPositions);
-        setDocumentTypes(dbDocumentTypes.length > 0 ? dbDocumentTypes as DocumentType[] : initialDocumentTypes);
-        setPaymentMethods(dbPaymentMethods.length > 0 ? dbPaymentMethods as PaymentMethod[] : initialPaymentMethods);
-        setSports(dbSports.length > 0 ? dbSports as Sport[] : initialSports);
-        setFields(dbFields.length > 0 ? dbFields as Field[] : initialFields);
-        setTimeSlots(dbTimeSlots as TimeSlot[]); // Solo usar horarios configurados por empleados
-        setReservations(dbReservations as Reservation[]);
+        console.log('📊 Data loaded:', {
+          employees: dbEmployees.length,
+          positions: dbPositions.length,
+          documentTypes: dbDocumentTypes.length,
+          paymentMethods: dbPaymentMethods.length,
+          sports: dbSports.length,
+          fields: dbFields.length,
+          timeSlots: dbTimeSlots.length,
+          reservations: dbReservations.length
+        });
 
-        // Inicializar datos por defecto si es la primera vez (sin horarios)
-        if (dbPositions.length === 0) {
-          await db.initializeDefaultData({
-            positions: initialPositions,
-            documentTypes: initialDocumentTypes,
-            paymentMethods: initialPaymentMethods,
-            sports: initialSports,
-            fields: initialFields,
-            timeSlots: [] // No inicializar horarios predefinidos
-          });
-        }
+        // Establecer datos
+        setEmployees(dbEmployees);
+        setPositions(dbPositions);
+        setDocumentTypes(dbDocumentTypes);
+        setPaymentMethods(dbPaymentMethods);
+        setSports(dbSports);
+        setFields(dbFields);
+        setTimeSlots(dbTimeSlots);
+        setReservations(dbReservations);
+
+        // Configurar listeners en tiempo real
+        const unsubscribeReservations = DatabaseService.onReservationsChange((newReservations) => {
+          console.log('🔄 Reservations updated:', newReservations.length);
+          setReservations(newReservations);
+        });
+
+        const unsubscribeTimeSlots = DatabaseService.onTimeSlotsChange((newTimeSlots) => {
+          console.log('🔄 TimeSlots updated:', newTimeSlots.length);
+          setTimeSlots(newTimeSlots);
+        });
 
         setIsLoading(false);
+
+        return () => {
+          unsubscribeReservations();
+          unsubscribeTimeSlots();
+        };
       } catch (error) {
-        console.error('Error initializing database:', error);
-        // Fallback a localStorage si IndexedDB falla
-        loadFromLocalStorage();
+        console.error('❌ Error initializing data:', error);
         setIsLoading(false);
-      }
-    };
-
-    const loadFromLocalStorage = () => {
-      // Load employees
-      const savedEmployees = localStorage.getItem(STORAGE_KEYS.employees);
-      if (savedEmployees) {
-        setEmployees(JSON.parse(savedEmployees));
-      }
-
-      // Load positions
-      const savedPositions = localStorage.getItem(STORAGE_KEYS.positions);
-      if (savedPositions) {
-        setPositions(JSON.parse(savedPositions));
-      } else {
-        setPositions(initialPositions);
-        localStorage.setItem(STORAGE_KEYS.positions, JSON.stringify(initialPositions));
-      }
-
-      // Load document types
-      const savedDocTypes = localStorage.getItem(STORAGE_KEYS.documentTypes);
-      if (savedDocTypes) {
-        setDocumentTypes(JSON.parse(savedDocTypes));
-      } else {
-        setDocumentTypes(initialDocumentTypes);
-        localStorage.setItem(STORAGE_KEYS.documentTypes, JSON.stringify(initialDocumentTypes));
-      }
-
-      // Load payment methods
-      const savedPaymentMethods = localStorage.getItem(STORAGE_KEYS.paymentMethods);
-      if (savedPaymentMethods) {
-        setPaymentMethods(JSON.parse(savedPaymentMethods));
-      } else {
-        setPaymentMethods(initialPaymentMethods);
-        localStorage.setItem(STORAGE_KEYS.paymentMethods, JSON.stringify(initialPaymentMethods));
-      }
-
-      // Load sports
-      const savedSports = localStorage.getItem(STORAGE_KEYS.sports);
-      if (savedSports) {
-        setSports(JSON.parse(savedSports));
-      } else {
-        setSports(initialSports);
-        localStorage.setItem(STORAGE_KEYS.sports, JSON.stringify(initialSports));
-      }
-
-      // Load fields
-      const savedFields = localStorage.getItem(STORAGE_KEYS.fields);
-      if (savedFields) {
-        setFields(JSON.parse(savedFields));
-      } else {
-        setFields(initialFields);
-        localStorage.setItem(STORAGE_KEYS.fields, JSON.stringify(initialFields));
-      }
-
-      // Load time slots
-      const savedTimeSlots = localStorage.getItem(STORAGE_KEYS.timeSlots);
-      if (savedTimeSlots) {
-        setTimeSlots(JSON.parse(savedTimeSlots));
-      } else {
-        setTimeSlots([]); // No inicializar con horarios predefinidos
-        localStorage.setItem(STORAGE_KEYS.timeSlots, JSON.stringify([]));
-      }
-
-      // Load reservations - NO eliminar, mantener persistencia
-      const savedReservations = localStorage.getItem(STORAGE_KEYS.reservations);
-      if (savedReservations) {
-        setReservations(JSON.parse(savedReservations));
-      } else {
-        setReservations([]); // Inicializar con array vacío en lugar de datos de ejemplo
-        localStorage.setItem(STORAGE_KEYS.reservations, JSON.stringify([]));
       }
     };
 
@@ -337,340 +151,414 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Employee management functions
   const addEmployee = async (employee: Omit<Employee, 'id' | 'createdAt'>) => {
-    const newEmployee: Employee = {
-      ...employee,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString()
-    };
-    const updatedEmployees = [...employees, newEmployee];
-    setEmployees(updatedEmployees);
-    
     try {
-      await db.addEmployee(newEmployee);
+      const newEmployee = await DatabaseService.add<Employee>('employees', employee);
+      setEmployees(prev => [...prev, newEmployee]);
+      console.log('✅ Employee added:', newEmployee);
     } catch (error) {
-      console.error('Error saving to database, using localStorage fallback:', error);
-      localStorage.setItem(STORAGE_KEYS.employees, JSON.stringify(updatedEmployees));
+      console.error('❌ Error adding employee:', error);
+      throw error;
     }
   };
 
   const updateEmployee = async (id: string, employee: Partial<Employee>) => {
-    const updatedEmployees = employees.map(emp => 
-      emp.id === id ? { ...emp, ...employee } : emp
-    );
-    setEmployees(updatedEmployees);
-    
     try {
-      const employeeToUpdate = updatedEmployees.find(emp => emp.id === id);
-      if (employeeToUpdate) {
-        await db.updateEmployee(employeeToUpdate);
-      }
+      await DatabaseService.update<Employee>('employees', id, employee);
+      setEmployees(prev => prev.map(emp => emp.id === id ? { ...emp, ...employee } : emp));
+      console.log('✅ Employee updated:', id);
     } catch (error) {
-      console.error('Error updating in database, using localStorage fallback:', error);
-      localStorage.setItem(STORAGE_KEYS.employees, JSON.stringify(updatedEmployees));
+      console.error('❌ Error updating employee:', error);
+      throw error;
     }
   };
 
   const deleteEmployee = async (id: string) => {
-    const updatedEmployees = employees.filter(emp => emp.id !== id);
-    setEmployees(updatedEmployees);
-    
     try {
-      await db.deleteEmployee(id);
+      await DatabaseService.delete('employees', id);
+      setEmployees(prev => prev.filter(emp => emp.id !== id));
+      console.log('✅ Employee deleted:', id);
     } catch (error) {
-      console.error('Error deleting from database, using localStorage fallback:', error);
-      localStorage.setItem(STORAGE_KEYS.employees, JSON.stringify(updatedEmployees));
+      console.error('❌ Error deleting employee:', error);
+      throw error;
     }
   };
 
   // Position management functions
-  const addPosition = (position: Omit<Position, 'id' | 'createdAt'>) => {
-    const newPosition: Position = {
-      ...position,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString()
-    };
-    const updatedPositions = [...positions, newPosition];
-    setPositions(updatedPositions);
-    localStorage.setItem(STORAGE_KEYS.positions, JSON.stringify(updatedPositions));
+  const addPosition = async (position: Omit<Position, 'id' | 'createdAt'>) => {
+    try {
+      const newPosition = await DatabaseService.add<Position>('positions', position);
+      setPositions(prev => [...prev, newPosition]);
+      console.log('✅ Position added:', newPosition);
+    } catch (error) {
+      console.error('❌ Error adding position:', error);
+      throw error;
+    }
   };
 
-  const updatePosition = (id: string, position: Partial<Position>) => {
-    const updatedPositions = positions.map(pos => 
-      pos.id === id ? { ...pos, ...position } : pos
-    );
-    setPositions(updatedPositions);
-    localStorage.setItem(STORAGE_KEYS.positions, JSON.stringify(updatedPositions));
+  const updatePosition = async (id: string, position: Partial<Position>) => {
+    try {
+      await DatabaseService.update<Position>('positions', id, position);
+      setPositions(prev => prev.map(pos => pos.id === id ? { ...pos, ...position } : pos));
+      console.log('✅ Position updated:', id);
+    } catch (error) {
+      console.error('❌ Error updating position:', error);
+      throw error;
+    }
   };
 
-  const deletePosition = (id: string) => {
-    const updatedPositions = positions.filter(pos => pos.id !== id);
-    setPositions(updatedPositions);
-    localStorage.setItem(STORAGE_KEYS.positions, JSON.stringify(updatedPositions));
+  const deletePosition = async (id: string) => {
+    try {
+      await DatabaseService.delete('positions', id);
+      setPositions(prev => prev.filter(pos => pos.id !== id));
+      console.log('✅ Position deleted:', id);
+    } catch (error) {
+      console.error('❌ Error deleting position:', error);
+      throw error;
+    }
   };
 
-  // Document type management functions
-  const addDocumentType = (docType: Omit<DocumentType, 'id' | 'createdAt'>) => {
-    const newDocType: DocumentType = {
-      ...docType,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString()
-    };
-    const updatedDocTypes = [...documentTypes, newDocType];
-    setDocumentTypes(updatedDocTypes);
-    localStorage.setItem(STORAGE_KEYS.documentTypes, JSON.stringify(updatedDocTypes));
+  // Document Type management functions
+  const addDocumentType = async (docType: Omit<DocumentType, 'id' | 'createdAt'>) => {
+    try {
+      const newDocType = await DatabaseService.add<DocumentType>('documentTypes', docType);
+      setDocumentTypes(prev => [...prev, newDocType]);
+      console.log('✅ Document type added:', newDocType);
+    } catch (error) {
+      console.error('❌ Error adding document type:', error);
+      throw error;
+    }
   };
 
-  const updateDocumentType = (id: string, docType: Partial<DocumentType>) => {
-    const updatedDocTypes = documentTypes.map(dt => 
-      dt.id === id ? { ...dt, ...docType } : dt
-    );
-    setDocumentTypes(updatedDocTypes);
-    localStorage.setItem(STORAGE_KEYS.documentTypes, JSON.stringify(updatedDocTypes));
+  const updateDocumentType = async (id: string, docType: Partial<DocumentType>) => {
+    try {
+      await DatabaseService.update<DocumentType>('documentTypes', id, docType);
+      setDocumentTypes(prev => prev.map(dt => dt.id === id ? { ...dt, ...docType } : dt));
+      console.log('✅ Document type updated:', id);
+    } catch (error) {
+      console.error('❌ Error updating document type:', error);
+      throw error;
+    }
   };
 
-  const deleteDocumentType = (id: string) => {
-    const updatedDocTypes = documentTypes.filter(dt => dt.id !== id);
-    setDocumentTypes(updatedDocTypes);
-    localStorage.setItem(STORAGE_KEYS.documentTypes, JSON.stringify(updatedDocTypes));
+  const deleteDocumentType = async (id: string) => {
+    try {
+      await DatabaseService.delete('documentTypes', id);
+      setDocumentTypes(prev => prev.filter(dt => dt.id !== id));
+      console.log('✅ Document type deleted:', id);
+    } catch (error) {
+      console.error('❌ Error deleting document type:', error);
+      throw error;
+    }
   };
 
-  // Payment method management functions
-  const addPaymentMethod = (method: Omit<PaymentMethod, 'id' | 'createdAt'>) => {
-    const newMethod: PaymentMethod = {
-      ...method,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString()
-    };
-    const updatedMethods = [...paymentMethods, newMethod];
-    setPaymentMethods(updatedMethods);
-    localStorage.setItem(STORAGE_KEYS.paymentMethods, JSON.stringify(updatedMethods));
+  // Payment Method management functions
+  const addPaymentMethod = async (method: Omit<PaymentMethod, 'id' | 'createdAt'>) => {
+    try {
+      const newMethod = await DatabaseService.add<PaymentMethod>('paymentMethods', method);
+      setPaymentMethods(prev => [...prev, newMethod]);
+      console.log('✅ Payment method added:', newMethod);
+    } catch (error) {
+      console.error('❌ Error adding payment method:', error);
+      throw error;
+    }
   };
 
-  const updatePaymentMethod = (id: string, method: Partial<PaymentMethod>) => {
-    const updatedMethods = paymentMethods.map(pm => 
-      pm.id === id ? { ...pm, ...method } : pm
-    );
-    setPaymentMethods(updatedMethods);
-    localStorage.setItem(STORAGE_KEYS.paymentMethods, JSON.stringify(updatedMethods));
+  const updatePaymentMethod = async (id: string, method: Partial<PaymentMethod>) => {
+    try {
+      await DatabaseService.update<PaymentMethod>('paymentMethods', id, method);
+      setPaymentMethods(prev => prev.map(pm => pm.id === id ? { ...pm, ...method } : pm));
+      console.log('✅ Payment method updated:', id);
+    } catch (error) {
+      console.error('❌ Error updating payment method:', error);
+      throw error;
+    }
   };
 
-  const deletePaymentMethod = (id: string) => {
-    const updatedMethods = paymentMethods.filter(pm => pm.id !== id);
-    setPaymentMethods(updatedMethods);
-    localStorage.setItem(STORAGE_KEYS.paymentMethods, JSON.stringify(updatedMethods));
+  const deletePaymentMethod = async (id: string) => {
+    try {
+      await DatabaseService.delete('paymentMethods', id);
+      setPaymentMethods(prev => prev.filter(pm => pm.id !== id));
+      console.log('✅ Payment method deleted:', id);
+    } catch (error) {
+      console.error('❌ Error deleting payment method:', error);
+      throw error;
+    }
   };
 
   // Sport management functions
-  const addSport = (sport: Sport) => {
-    const updatedSports = [...sports, sport];
-    setSports(updatedSports);
-    localStorage.setItem(STORAGE_KEYS.sports, JSON.stringify(updatedSports));
+  const addSport = async (sport: Sport) => {
+    try {
+      const newSport = await DatabaseService.add<Sport>('sports', sport);
+      setSports(prev => [...prev, newSport]);
+      console.log('✅ Sport added:', newSport);
+    } catch (error) {
+      console.error('❌ Error adding sport:', error);
+      throw error;
+    }
   };
 
-  const updateSport = (id: string, sport: Partial<Sport>) => {
-    const updatedSports = sports.map(s => 
-      s.id === id ? { ...s, ...sport } : s
-    );
-    setSports(updatedSports);
-    localStorage.setItem(STORAGE_KEYS.sports, JSON.stringify(updatedSports));
+  const updateSport = async (id: string, sport: Partial<Sport>) => {
+    try {
+      await DatabaseService.update<Sport>('sports', id, sport);
+      setSports(prev => prev.map(s => s.id === id ? { ...s, ...sport } : s));
+      console.log('✅ Sport updated:', id);
+    } catch (error) {
+      console.error('❌ Error updating sport:', error);
+      throw error;
+    }
   };
 
-  const deleteSport = (id: string) => {
-    const updatedSports = sports.filter(s => s.id !== id);
-    setSports(updatedSports);
-    localStorage.setItem(STORAGE_KEYS.sports, JSON.stringify(updatedSports));
+  const deleteSport = async (id: string) => {
+    try {
+      await DatabaseService.delete('sports', id);
+      setSports(prev => prev.filter(s => s.id !== id));
+      console.log('✅ Sport deleted:', id);
+    } catch (error) {
+      console.error('❌ Error deleting sport:', error);
+      throw error;
+    }
   };
 
   // Field management functions
-  const addField = (field: Field) => {
-    const updatedFields = [...fields, field];
-    setFields(updatedFields);
-    localStorage.setItem(STORAGE_KEYS.fields, JSON.stringify(updatedFields));
-  };
-
-  const updateField = (id: string, field: Partial<Field>) => {
-    const updatedFields = fields.map(f => 
-      f.id === id ? { ...f, ...field } : f
-    );
-    setFields(updatedFields);
-    localStorage.setItem(STORAGE_KEYS.fields, JSON.stringify(updatedFields));
-  };
-
-  const deleteField = (id: string) => {
-    const updatedFields = fields.filter(f => f.id !== id);
-    setFields(updatedFields);
-    localStorage.setItem(STORAGE_KEYS.fields, JSON.stringify(updatedFields));
-  };
-
-  // Time slot management functions
-  const addTimeSlot = async (timeSlot: Omit<TimeSlot, 'id'>) => {
-    const newTimeSlot: TimeSlot = {
-      ...timeSlot,
-      id: Date.now().toString()
-    };
-    const updatedTimeSlots = [...timeSlots, newTimeSlot];
-    setTimeSlots(updatedTimeSlots);
-    
+  const addField = async (field: Field) => {
     try {
-      await db.addTimeSlot(newTimeSlot);
+      const newField = await DatabaseService.add<Field>('fields', field);
+      setFields(prev => [...prev, newField]);
+      console.log('✅ Field added:', newField);
     } catch (error) {
-      console.error('Error saving time slot to database, using localStorage fallback:', error);
-      localStorage.setItem(STORAGE_KEYS.timeSlots, JSON.stringify(updatedTimeSlots));
+      console.error('❌ Error adding field:', error);
+      throw error;
+    }
+  };
+
+  const updateField = async (id: string, field: Partial<Field>) => {
+    try {
+      await DatabaseService.update<Field>('fields', id, field);
+      setFields(prev => prev.map(f => f.id === id ? { ...f, ...field } : f));
+      console.log('✅ Field updated:', id);
+    } catch (error) {
+      console.error('❌ Error updating field:', error);
+      throw error;
+    }
+  };
+
+  const deleteField = async (id: string) => {
+    try {
+      await DatabaseService.delete('fields', id);
+      setFields(prev => prev.filter(f => f.id !== id));
+      console.log('✅ Field deleted:', id);
+    } catch (error) {
+      console.error('❌ Error deleting field:', error);
+      throw error;
+    }
+  };
+
+  // Time Slot management functions
+  const addTimeSlot = async (timeSlot: Omit<TimeSlot, 'id'>) => {
+    try {
+      const newTimeSlot = await DatabaseService.add<TimeSlot>('timeSlots', timeSlot);
+      setTimeSlots(prev => [...prev, newTimeSlot]);
+      console.log('✅ Time slot added:', newTimeSlot);
+    } catch (error) {
+      console.error('❌ Error adding time slot:', error);
+      throw error;
     }
   };
 
   const updateTimeSlot = async (id: string, timeSlot: Partial<TimeSlot>) => {
-    const updatedTimeSlots = timeSlots.map(ts => 
-      ts.id === id ? { ...ts, ...timeSlot } : ts
-    );
-    setTimeSlots(updatedTimeSlots);
-    
     try {
-      const timeSlotToUpdate = updatedTimeSlots.find(ts => ts.id === id);
-      if (timeSlotToUpdate) {
-        await db.updateTimeSlot(timeSlotToUpdate);
-      }
+      await DatabaseService.update<TimeSlot>('timeSlots', id, timeSlot);
+      setTimeSlots(prev => prev.map(ts => ts.id === id ? { ...ts, ...timeSlot } : ts));
+      console.log('✅ Time slot updated:', id);
     } catch (error) {
-      console.error('Error updating time slot in database, using localStorage fallback:', error);
-      localStorage.setItem(STORAGE_KEYS.timeSlots, JSON.stringify(updatedTimeSlots));
+      console.error('❌ Error updating time slot:', error);
+      throw error;
     }
   };
 
   const deleteTimeSlot = async (id: string) => {
-    const updatedTimeSlots = timeSlots.filter(ts => ts.id !== id);
-    setTimeSlots(updatedTimeSlots);
-    
     try {
-      await db.deleteTimeSlot(id);
+      await DatabaseService.delete('timeSlots', id);
+      setTimeSlots(prev => prev.filter(ts => ts.id !== id));
+      console.log('✅ Time slot deleted:', id);
     } catch (error) {
-      console.error('Error deleting time slot from database, using localStorage fallback:', error);
-      localStorage.setItem(STORAGE_KEYS.timeSlots, JSON.stringify(updatedTimeSlots));
+      console.error('❌ Error deleting time slot:', error);
+      throw error;
     }
   };
 
   const getFieldTimeSlots = (fieldId: string): TimeSlot[] => {
-    return timeSlots.filter(slot => slot.fieldId === fieldId && slot.isActive);
+    return timeSlots.filter(ts => ts.fieldId === fieldId && ts.isActive);
   };
 
   // Reservation management functions
   const addReservation = async (reservation: Omit<Reservation, 'id' | 'createdAt'>) => {
-    const newReservation: Reservation = {
-      ...reservation,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString()
-    };
-    const updatedReservations = [...reservations, newReservation];
-    setReservations(updatedReservations);
-    
     try {
-      await db.addReservation(newReservation);
+      const newReservation = await DatabaseService.add<Reservation>('reservations', reservation);
+      console.log('✅ Reservation added:', newReservation);
+      // No need to update state here as the real-time listener will handle it
     } catch (error) {
-      console.error('Error saving reservation to database, using localStorage fallback:', error);
-      localStorage.setItem(STORAGE_KEYS.reservations, JSON.stringify(updatedReservations));
+      console.error('❌ Error adding reservation:', error);
+      throw error;
     }
   };
 
   const updateReservation = async (id: string, reservation: Partial<Reservation>) => {
-    const updatedReservations = reservations.map(res => 
-      res.id === id ? { ...res, ...reservation } : res
-    );
-    setReservations(updatedReservations);
-    
     try {
-      const reservationToUpdate = updatedReservations.find(res => res.id === id);
-      if (reservationToUpdate) {
-        await db.updateReservation(reservationToUpdate);
+      await DatabaseService.update<Reservation>('reservations', id, reservation);
+      console.log('✅ Reservation updated:', id, 'Status:', reservation.status);
+      
+      // Si la reserva se confirma, elimina el horario correspondiente
+      if (reservation.status === 'confirmed') {
+        console.log('🔍 Buscando TimeSlot para eliminar...');
+        
+        // Buscar la reserva completa
+        const updatedReservation = reservations.find(r => r.id === id);
+        if (updatedReservation) {
+          console.log('📋 Reserva encontrada:', {
+            fieldId: updatedReservation.fieldId,
+            date: updatedReservation.date,
+            startTime: updatedReservation.startTime,
+            endTime: updatedReservation.endTime
+          });
+          
+          console.log('📊 Total de TimeSlots disponibles:', timeSlots.length);
+          
+          // Buscar el timeslot exacto con más criterios
+          const matchingSlots = timeSlots.filter(ts => {
+            const fieldMatch = ts.fieldId === updatedReservation.fieldId;
+            const timeMatch = ts.startTime === updatedReservation.startTime && ts.endTime === updatedReservation.endTime;
+            const dateMatch = (ts as any).date === updatedReservation.date || (ts as any).allDays === true;
+            
+            console.log('🔍 Comparando TimeSlot:', {
+              id: ts.id,
+              fieldId: ts.fieldId,
+              startTime: ts.startTime,
+              endTime: ts.endTime,
+              date: (ts as any).date,
+              allDays: (ts as any).allDays,
+              fieldMatch,
+              timeMatch,
+              dateMatch
+            });
+            
+            return fieldMatch && timeMatch && dateMatch;
+          });
+          
+          console.log('🎯 TimeSlots que coinciden:', matchingSlots.length);
+          
+          if (matchingSlots.length > 0) {
+            const slotToDelete = matchingSlots[0];
+            console.log('🗑️ Eliminando TimeSlot:', slotToDelete.id);
+            await deleteTimeSlot(slotToDelete.id!);
+            console.log('✅ TimeSlot eliminado exitosamente:', slotToDelete.id);
+          } else {
+            console.log('❌ No se encontró TimeSlot para eliminar');
+            console.log('📋 Criterios de búsqueda:', {
+              fieldId: updatedReservation.fieldId,
+              date: updatedReservation.date,
+              startTime: updatedReservation.startTime,
+              endTime: updatedReservation.endTime
+            });
+            console.log('🔍 TimeSlot disponible:', timeSlots[0] ? {
+              id: timeSlots[0].id,
+              fieldId: timeSlots[0].fieldId,
+              startTime: timeSlots[0].startTime,
+              endTime: timeSlots[0].endTime,
+              date: (timeSlots[0] as any).date,
+              allDays: (timeSlots[0] as any).allDays
+            } : 'No hay TimeSlots');
+          }
+        } else {
+          console.log('❌ No se encontró la reserva actualizada');
+        }
       }
+      // No need to update state here as the real-time listener will handle it
     } catch (error) {
-      console.error('Error updating reservation in database, using localStorage fallback:', error);
-      localStorage.setItem(STORAGE_KEYS.reservations, JSON.stringify(updatedReservations));
-    }
-    
-    // If reservation is being confirmed, mark the time slot as unavailable
-    if (reservation.status === 'confirmed') {
-      const confirmedReservation = updatedReservations.find(res => res.id === id);
-      if (confirmedReservation) {
-        const updatedTimeSlots = timeSlots.map(slot => 
-          slot.id === confirmedReservation.timeSlotId ? { ...slot, isAvailable: false } : slot
-        );
-        setTimeSlots(updatedTimeSlots);
-        
-        try {
-          const timeSlotToUpdate = updatedTimeSlots.find(slot => slot.id === confirmedReservation.timeSlotId);
-          if (timeSlotToUpdate) {
-            await db.updateTimeSlot(timeSlotToUpdate);
-          }
-        } catch (error) {
-          console.error('Error updating time slot in database, using localStorage fallback:', error);
-          localStorage.setItem(STORAGE_KEYS.timeSlots, JSON.stringify(updatedTimeSlots));
-        }
-      }
-    }
-    
-    // If reservation is being cancelled, mark the time slot as available again
-    if (reservation.status === 'cancelled') {
-      const cancelledReservation = updatedReservations.find(res => res.id === id);
-      if (cancelledReservation) {
-        const updatedTimeSlots = timeSlots.map(slot => 
-          slot.id === cancelledReservation.timeSlotId ? { ...slot, isAvailable: true } : slot
-        );
-        setTimeSlots(updatedTimeSlots);
-        
-        try {
-          const timeSlotToUpdate = updatedTimeSlots.find(slot => slot.id === cancelledReservation.timeSlotId);
-          if (timeSlotToUpdate) {
-            await db.updateTimeSlot(timeSlotToUpdate);
-          }
-        } catch (error) {
-          console.error('Error updating time slot in database, using localStorage fallback:', error);
-          localStorage.setItem(STORAGE_KEYS.timeSlots, JSON.stringify(updatedTimeSlots));
-        }
-      }
+      console.error('❌ Error updating reservation:', error);
+      throw error;
     }
   };
 
   const deleteReservation = async (id: string) => {
-    const updatedReservations = reservations.filter(res => res.id !== id);
-    setReservations(updatedReservations);
-    
     try {
-      await db.deleteReservation(id);
+      await DatabaseService.delete('reservations', id);
+      console.log('✅ Reservation deleted:', id);
+      // No need to update state here as the real-time listener will handle it
     } catch (error) {
-      console.error('Error deleting reservation from database, using localStorage fallback:', error);
-      localStorage.setItem(STORAGE_KEYS.reservations, JSON.stringify(updatedReservations));
+      console.error('❌ Error deleting reservation:', error);
+      throw error;
     }
   };
 
   const getAvailableTimeSlots = (fieldId: string, date: string): TimeSlot[] => {
-    // Get all time slots for the field
-    const fieldTimeSlots = timeSlots.filter(slot => slot.fieldId === fieldId && slot.isActive);
-    
-    // Filter out time slots that are already reserved for this date
-    const reservedTimeSlotIds = reservations
-      .filter(res => res.fieldId === fieldId && res.date === date && res.status !== 'cancelled')
-      .map(res => res.timeSlotId);
-    
-    return fieldTimeSlots.filter(slot => 
-      slot.isAvailable && !reservedTimeSlotIds.includes(slot.id)
-    );
+    // Filtra por cancha y por fecha exacta o allDays
+    const fieldTimeSlots = timeSlots.filter(ts => ts.fieldId === fieldId && ts.isActive);
+    const dayTimeSlots = fieldTimeSlots.filter(ts => {
+      const allDays = (ts as any).allDays;
+      const slotDate = (ts as any).date;
+      return allDays === true || (slotDate && slotDate === date);
+    });
+
+    // Solo reservas confirmadas bloquean el horario
+    const dayReservations = reservations.filter(r => r.fieldId === fieldId && r.date === date && r.status === 'confirmed');
+
+    // Filter out time slots that are already reserved
+    return dayTimeSlots.filter(timeSlot => {
+      const isReserved = dayReservations.some(reservation => {
+        const reservationStart = reservation.startTime;
+        const reservationEnd = reservation.endTime;
+        const timeSlotStart = timeSlot.startTime;
+        const timeSlotEnd = timeSlot.endTime;
+        // Check if there's any overlap
+        return (timeSlotStart < reservationEnd && timeSlotEnd > reservationStart);
+      });
+      return !isReserved;
+    });
   };
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <DataContext.Provider value={{
-      employees, addEmployee, updateEmployee, deleteEmployee,
-      positions, addPosition, updatePosition, deletePosition,
-      documentTypes, addDocumentType, updateDocumentType, deleteDocumentType,
-      paymentMethods, addPaymentMethod, updatePaymentMethod, deletePaymentMethod,
-      sports, addSport, updateSport, deleteSport,
-      fields, addField, updateField, deleteField,
-      timeSlots, addTimeSlot, updateTimeSlot, deleteTimeSlot, getFieldTimeSlots,
-      reservations, addReservation, updateReservation, deleteReservation, getAvailableTimeSlots
+      employees,
+      addEmployee,
+      updateEmployee,
+      deleteEmployee,
+      positions,
+      addPosition,
+      updatePosition,
+      deletePosition,
+      documentTypes,
+      addDocumentType,
+      updateDocumentType,
+      deleteDocumentType,
+      paymentMethods,
+      addPaymentMethod,
+      updatePaymentMethod,
+      deletePaymentMethod,
+      sports,
+      addSport,
+      updateSport,
+      deleteSport,
+      fields,
+      addField,
+      updateField,
+      deleteField,
+      timeSlots,
+      addTimeSlot,
+      updateTimeSlot,
+      deleteTimeSlot,
+      getFieldTimeSlots,
+      reservations,
+      addReservation,
+      updateReservation,
+      deleteReservation,
+      getAvailableTimeSlots
     }}>
-      {isLoading ? (
-        <LoadingSpinner message="Inicializando base de datos..." />
-      ) : (
-        children
-      )}
+      {children}
     </DataContext.Provider>
   );
 };

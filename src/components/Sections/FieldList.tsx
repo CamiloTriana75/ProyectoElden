@@ -54,7 +54,7 @@ export const FieldList: React.FC<FieldListProps> = ({ sport, onFieldSelect, onBa
                 
                 <div className="flex items-center justify-between">
                   <div className="text-red-400 text-sm font-medium">
-                    1.1.{index + 1} ——————→
+                   
                   </div>
                   <div className="text-right">
                     <div className="text-white font-bold text-lg">${field.pricePerHour}/hora</div>

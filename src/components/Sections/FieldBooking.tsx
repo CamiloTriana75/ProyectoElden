@@ -14,17 +14,40 @@ interface FieldBookingProps {
 
 export const FieldBooking: React.FC<FieldBookingProps> = ({ field, onBack, onBookingComplete }) => {
   const { user } = useAuth();
-  const { getAvailableTimeSlots, addReservation, sports } = useData();
+  const { getAvailableTimeSlots, addReservation, sports, timeSlots, reservations } = useData();
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
   const [isBooking, setIsBooking] = useState(false);
   
-  const availableSlots = getAvailableTimeSlots(field.id, selectedDate);
-  const selectedSlot = availableSlots.find(slot => slot.id === selectedTimeSlot);
-  const sport = sports.find(s => s.id === field.sportId);
+  // Uso fallback para evitar undefined en field y slot
+  const fieldId = field.id || '';
+  const fieldName = field.name || '';
+  const allDaySlots = timeSlots.filter(ts => ts.fieldId === fieldId && ts.isActive && ((ts as any).allDays === true || (ts as any).date === selectedDate));
+  // Defino el tipo local para los slots con price e isAvailable
+  type SlotWithStatus = typeof allDaySlots[number] & { isAvailable: boolean; price: number };
+  const confirmedReservations = reservations.filter(r => r.fieldId === fieldId && r.date === selectedDate && r.status === 'confirmed');
+  const slotsWithStatus: SlotWithStatus[] = allDaySlots.map(slot => {
+    const isReserved = confirmedReservations.some(reservation => {
+      const slotStart = slot.startTime || '';
+      const slotEnd = slot.endTime || '';
+      const reservationStart = reservation.startTime || '';
+      const reservationEnd = reservation.endTime || '';
+      return slotStart < reservationEnd && slotEnd > reservationStart;
+    });
+    return { ...slot, isAvailable: !isReserved, price: (slot as any).price || 0 };
+  });
+
+  const selectedSlot = slotsWithStatus.find(slot => slot.id === selectedTimeSlot) || null;
+  const sport = sports.find(s => s.id === field.sportId) || { name: '', icon: '', color: '' };
 
   const handleBooking = async () => {
     if (!selectedTimeSlot || !selectedSlot || !user) return;
+    
+    // Validar que los campos requeridos estén presentes
+    if (!selectedSlot.startTime || !selectedSlot.endTime) {
+      console.error('❌ Error: startTime o endTime no están definidos');
+      return;
+    }
     
     setIsBooking(true);
     
@@ -35,13 +58,16 @@ export const FieldBooking: React.FC<FieldBookingProps> = ({ field, onBack, onBoo
     addReservation({
       userId: user.id,
       fieldId: field.id,
-      sportName: sport?.name || 'Deporte',
-      fieldName: field.name,
       date: selectedDate,
-      timeSlot: `${selectedSlot.startTime}-${selectedSlot.endTime}`,
-      timeSlotId: selectedSlot.id,
+      startTime: selectedSlot.startTime!,
+      endTime: selectedSlot.endTime!,
+      totalPrice: selectedSlot.price,
+      paymentMethodId: 'default',
       status: 'pending',
-      totalPrice: selectedSlot.price
+      sportName: sport?.name || '',
+      fieldName: field.name,
+      timeSlot: `${selectedSlot.startTime}-${selectedSlot.endTime}`,
+      timeSlotId: selectedSlot.id
     });
     
     setIsBooking(false);
@@ -84,7 +110,7 @@ export const FieldBooking: React.FC<FieldBookingProps> = ({ field, onBack, onBoo
         </div>
       </div>
 
-      {availableSlots.length === 0 ? (
+      {slotsWithStatus.length === 0 ? (
         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-12 text-center">
           <Clock className="w-16 h-16 text-gray-500 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-white mb-2">No hay horarios disponibles</h3>
@@ -95,10 +121,10 @@ export const FieldBooking: React.FC<FieldBookingProps> = ({ field, onBack, onBoo
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {availableSlots.map((slot) => (
+            {slotsWithStatus.map((slot) => (
               <button
                 key={slot.id}
-                onClick={() => slot.isAvailable && setSelectedTimeSlot(slot.id)}
+                onClick={() => slot.isAvailable && slot.id && setSelectedTimeSlot(slot.id)}
                 disabled={!slot.isAvailable}
                 className={`p-4 rounded-lg border-2 transition-all duration-200 ${
                   selectedTimeSlot === slot.id
@@ -113,7 +139,7 @@ export const FieldBooking: React.FC<FieldBookingProps> = ({ field, onBack, onBoo
                     {slot.startTime}-{slot.endTime}
                   </div>
                   <div className="text-sm opacity-75">
-                    {slot.isAvailable ? `$${slot.price}` : 'Ocupado'}
+                    {slot.isAvailable ? `$${slot.price}` : 'Reservado'}
                   </div>
                 </div>
               </button>
@@ -147,12 +173,6 @@ export const FieldBooking: React.FC<FieldBookingProps> = ({ field, onBack, onBoo
               </div>
             </div>
           )}
-
-          <div className="flex justify-center">
-            <div className="text-red-400 text-sm font-medium mb-4">
-              1.1.2 ——————→
-            </div>
-          </div>
 
           <div className="text-center">
             <button

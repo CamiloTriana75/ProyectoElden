@@ -292,14 +292,12 @@ export const Reservations: React.FC = () => {
         <>
           <div className="flex justify-center mt-8">
             <div className="text-red-400 text-sm font-medium">
-              2.1 ——————→
+              
             </div>
           </div>
 
           <div className="text-center mt-4">
-            <button className="bg-blue-700 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-800 transition-colors">
-              Seleccionar método de pago
-            </button>
+            
           </div>
         </>
       )}

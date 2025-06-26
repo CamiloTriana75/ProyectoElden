@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, Briefcase, FileText, CreditCard, Trophy, Building, Clock } from 'lucide-react';
+import { Users, Briefcase, FileText, CreditCard, Trophy, Building, Clock, Database } from 'lucide-react';
 
 interface AdminSettingsProps {
   onSectionSelect: (section: string) => void;
@@ -35,13 +35,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSectionSelect })
       number: '6.4',
       description: 'Tipos de documentos de identidad'
     },
-    { 
-      id: 'payment-methods', 
-      label: 'Formas de pago', 
-      icon: CreditCard, 
-      number: '6.5',
-      description: 'Métodos de pago disponibles'
-    },
+    
     { 
       id: 'fields', 
       label: 'Canchas', 
@@ -55,6 +49,13 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSectionSelect })
       icon: Clock, 
       number: '6.7',
       description: 'Configurar horarios de las canchas'
+    },
+    { 
+      id: 'database', 
+      label: 'Base de Datos', 
+      icon: Database, 
+      number: '6.8',
+      description: 'Administrar y reinicializar la base de datos'
     }
   ];
 
@@ -78,9 +79,6 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onSectionSelect })
             >
               <div className="flex items-center gap-6">
                 <div className="text-left">
-                  <div className="text-red-400 text-sm font-medium mb-2">
-                    {section.number} ——————→
-                  </div>
                 </div>
                 
                 <div className="text-6xl group-hover:scale-110 transition-transform duration-300">

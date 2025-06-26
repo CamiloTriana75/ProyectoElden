@@ -13,9 +13,9 @@ export const Header: React.FC = () => {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-white">
             <User className="w-5 h-5" />
-            <span className="text-sm">Iniciar Sesión</span>
-            <span className="text-gray-400">|</span>
-            <span className="text-sm">Registrarse</span>
+            <span className="text-sm"></span>
+            <span className="text-gray-400"></span>
+            <span className="text-sm"></span>
           </div>
         </div>
       </div>

@@ -1,15 +1,25 @@
 import React, { useState } from 'react';
 import { Plus, Edit, Trash2, Clock, DollarSign } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
-import { TimeSlot, Field } from '../../types';
+import { TimeSlot as BaseTimeSlot, Field } from '../../types';
 
 interface TimeSlotFormData {
   fieldId: string;
+  date: string; // fecha exacta (YYYY-MM-DD)
+  allDays: boolean;
   startTime: string;
   endTime: string;
   price: number;
   isActive: boolean;
   isAvailable: boolean;
+}
+
+// Extiende TimeSlot para el uso local
+interface TimeSlot extends BaseTimeSlot {
+  price: number;
+  isAvailable: boolean;
+  date?: string;
+  allDays?: boolean;
 }
 
 export const TimeSlotManagement: React.FC = () => {
@@ -18,6 +28,8 @@ export const TimeSlotManagement: React.FC = () => {
   const [editingSlot, setEditingSlot] = useState<TimeSlot | null>(null);
   const [formData, setFormData] = useState<TimeSlotFormData>({
     fieldId: '',
+    date: '',
+    allDays: false,
     startTime: '',
     endTime: '',
     price: 0,
@@ -27,16 +39,20 @@ export const TimeSlotManagement: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    const dataToSave = { ...formData };
+    if (formData.allDays) {
+      dataToSave.date = '';
+    }
     if (editingSlot) {
-      await updateTimeSlot(editingSlot.id, formData);
+      await updateTimeSlot(editingSlot.id!, dataToSave);
       setEditingSlot(null);
     } else {
-      await addTimeSlot(formData);
+      await addTimeSlot(dataToSave);
     }
-    
     setFormData({
       fieldId: '',
+      date: '',
+      allDays: false,
       startTime: '',
       endTime: '',
       price: 0,
@@ -46,20 +62,30 @@ export const TimeSlotManagement: React.FC = () => {
     setShowForm(false);
   };
 
-  const handleEdit = (slot: TimeSlot) => {
-    setEditingSlot(slot);
+  const handleEdit = (slot: BaseTimeSlot) => {
+    const slotExt: TimeSlot = {
+      ...slot,
+      price: (slot as any).price || 0,
+      isAvailable: (slot as any).isAvailable !== undefined ? (slot as any).isAvailable : true,
+      date: (slot as any).date || '',
+      allDays: (slot as any).allDays || false
+    };
+    setEditingSlot(slotExt);
     setFormData({
-      fieldId: slot.fieldId,
-      startTime: slot.startTime,
-      endTime: slot.endTime,
-      price: slot.price,
-      isActive: slot.isActive,
-      isAvailable: slot.isAvailable
+      fieldId: slotExt.fieldId,
+      date: slotExt.date || '',
+      allDays: slotExt.allDays || false,
+      startTime: slotExt.startTime,
+      endTime: slotExt.endTime,
+      price: slotExt.price,
+      isActive: slotExt.isActive,
+      isAvailable: slotExt.isAvailable
     });
     setShowForm(true);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string | undefined) => {
+    if (!id) return;
     if (window.confirm('¿Estás seguro de que quieres eliminar este horario?')) {
       await deleteTimeSlot(id);
     }
@@ -88,6 +114,8 @@ export const TimeSlotManagement: React.FC = () => {
             setEditingSlot(null);
             setFormData({
               fieldId: '',
+              date: '',
+              allDays: false,
               startTime: '',
               endTime: '',
               price: 0,
@@ -127,7 +155,17 @@ export const TimeSlotManagement: React.FC = () => {
                 ))}
               </select>
             </div>
-
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Fecha específica
+              </label>
+              <input
+                type="date"
+                value={formData.date}
+                onChange={e => setFormData({ ...formData, date: e.target.value })}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -232,50 +270,57 @@ export const TimeSlotManagement: React.FC = () => {
                 <p className="text-gray-500 text-center py-4">No hay horarios configurados para esta cancha</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {slots.map((slot) => (
-                    <div
-                      key={slot.id}
-                      className={`p-4 border rounded-lg ${
-                        slot.isActive ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-gray-500" />
-                          <span className="font-medium">
-                            {slot.startTime} - {slot.endTime}
+                  {slots.map((slot) => {
+                    const slotExt: TimeSlot = {
+                      ...slot,
+                      price: (slot as any).price || 0,
+                      isAvailable: (slot as any).isAvailable !== undefined ? (slot as any).isAvailable : true
+                    };
+                    return (
+                      <div
+                        key={slotExt.id}
+                        className={`p-4 border rounded-lg ${
+                          slotExt.isActive ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-gray-500" />
+                            <span className="font-medium">
+                              {slotExt.startTime} - {slotExt.endTime}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <DollarSign className="w-4 h-4 text-green-600" />
+                            <span className="font-semibold text-green-600">${slotExt.price}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className={`text-sm px-2 py-1 rounded ${
+                            slotExt.isActive 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {slotExt.isActive ? 'Activo' : 'Inactivo'}
                           </span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <DollarSign className="w-4 h-4 text-green-600" />
-                          <span className="font-semibold text-green-600">${slot.price}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className={`text-sm px-2 py-1 rounded ${
-                          slot.isActive 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {slot.isActive ? 'Activo' : 'Inactivo'}
-                        </span>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEdit(slot)}
-                            className="text-blue-600 hover:text-blue-800"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(slot.id)}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleEdit(slotExt)}
+                              className="text-blue-600 hover:text-blue-800"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(slotExt.id)}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

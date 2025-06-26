@@ -27,9 +27,7 @@ export const SportSelection: React.FC<SportSelectionProps> = ({ onSportSelect })
           >
             <div className="flex items-center gap-6">
               <div className="text-left">
-                <div className="text-red-400 text-sm font-medium mb-2">
-                  1.{index + 1} ——————→
-                </div>
+                
               </div>
               
               <div className="text-6xl group-hover:scale-110 transition-transform duration-300">

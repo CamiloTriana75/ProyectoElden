@@ -9,6 +9,7 @@ import { PaymentMethodManagement } from '../Admin/PaymentMethodManagement';
 import { SportManagement } from '../Admin/SportManagement';
 import { FieldManagement } from '../Admin/FieldManagement';
 import { TimeSlotManagement } from '../Admin/TimeSlotManagement';
+import { DatabaseManagement } from '../Admin/DatabaseManagement';
 
 export const Settings: React.FC = () => {
   const { user } = useAuth();
@@ -46,6 +47,9 @@ export const Settings: React.FC = () => {
     }
     if (currentSection === 'time-slots') {
       return <TimeSlotManagement />;
+    }
+    if (currentSection === 'database') {
+      return <DatabaseManagement onBack={() => setCurrentSection(null)} />;
     }
     
     return <AdminSettings onSectionSelect={setCurrentSection} />;
@@ -172,53 +176,13 @@ export const Settings: React.FC = () => {
           </div>
         </div>
 
-        {/* Preferences */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <Globe className="w-6 h-6 text-blue-400" />
-            <h2 className="text-2xl font-bold text-white">Preferencias</h2>
-          </div>
+        
+        
 
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-white font-medium mb-3">Tema</h3>
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setTheme('light')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                    theme === 'light' ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                  }`}
-                >
-                  <Sun className="w-4 h-4" />
-                  Claro
-                </button>
-                <button
-                  onClick={() => setTheme('dark')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                    theme === 'dark' ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                  }`}
-                >
-                  <Moon className="w-4 h-4" />
-                  Oscuro
-                </button>
-              </div>
-            </div>
 
-            <div>
-              <h3 className="text-white font-medium mb-3">Idioma</h3>
-              <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                className="bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              >
-                <option value="es">Español</option>
-                <option value="en">English</option>
-                <option value="pt">Português</option>
-              </select>
-            </div>
+           
           </div>
         </div>
-      </div>
-    </div>
+
   );
 };

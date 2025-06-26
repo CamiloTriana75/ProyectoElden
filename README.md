@@ -1,59 +1,28 @@
 # Campos Deportivos Elden
 
-**Sistema de gestión y reservas para campos deportivos.**
+Sistema de gestión de reservas para campos deportivos con base de datos en tiempo real usando Firebase.
 
-## Descripción
+## 🚀 Características
 
-Campos Deportivos Elden es una aplicación web desarrollada con React y Vite para la gestión integral de reservas, administración de canchas, horarios, reportes y comunicación entre clientes y empleados de un complejo deportivo. El sistema permite a los usuarios registrarse, reservar canchas, enviar mensajes de contacto y gestionar su perfil, mientras que los empleados y administradores pueden gestionar recursos, aprobar/rechazar reservas, ver reportes y responder mensajes de clientes.
+- **Base de datos centralizada**: Todos los usuarios comparten la misma base de datos
+- **Tiempo real**: Las reservas se actualizan instantáneamente para todos los usuarios
+- **Autenticación segura**: Sistema de login/registro con Firebase Auth
+- **Gestión de reservas**: Crear, editar y cancelar reservas
+- **Múltiples roles**: Administrador, empleado y cliente
+- **Interfaz moderna**: Diseño responsive con Tailwind CSS
+- **TypeScript**: Código tipado y seguro
 
-## Características principales
+## 📋 Requisitos
 
-- **Registro y autenticación de usuarios** (clientes, empleados y administradores)
-- **Gestión de reservas**: creación, confirmación, cancelación y filtrado por estado y deporte
-- **Gestión de canchas**: alta, edición y eliminación de canchas por deporte
-- **Gestión de horarios**: configuración de horarios disponibles y precios por cancha
-- **Gestión de empleados**: alta, edición y eliminación de empleados y cargos
-- **Gestión de métodos de pago y tipos de documento**
-- **Reportes y estadísticas**: visualización de reservas, ingresos, deportes más populares y horarios más utilizados
-- **Mensajería interna**: clientes pueden enviar mensajes de contacto, empleados pueden ver, filtrar y responder mensajes
-- **Panel de ajustes**: notificaciones, seguridad, preferencias de idioma y tema
-- **Persistencia local**: todos los datos se almacenan en el navegador usando IndexedDB
-- **Interfaz moderna y responsiva** con TailwindCSS y componentes personalizados
+- Node.js 16 o superior
+- Cuenta de Firebase (gratuita)
 
-## Tecnologías utilizadas
-
-- **React 18** (con hooks y contextos)
-- **Vite** (entorno de desarrollo ultrarrápido)
-- **TypeScript**
-- **TailwindCSS** (estilos y diseño responsivo)
-- **IndexedDB** (persistencia local de datos)
-- **Lucide React** (iconos)
-- **date-fns** (manejo de fechas)
-- **ESLint** (calidad de código)
-
-## Estructura de carpetas principal
-
-```
-src/
-  components/
-    Sections/        # Páginas principales (Home, Reservas, Reportes, Contacto, etc.)
-    Admin/           # Gestión de recursos (empleados, canchas, horarios, etc.)
-    Layout/          # Sidebar, Header, Spinner
-    Auth/            # Login y registro
-  contexts/          # Contextos de autenticación y datos
-  services/          # Lógica de base de datos (IndexedDB)
-  types/             # Tipos y modelos TypeScript
-  data/              # Datos de ejemplo o mock
-  index.css          # Estilos globales
-  main.tsx           # Punto de entrada
-```
-
-## Instalación y ejecución
+## 🛠️ Instalación
 
 1. **Clona el repositorio**
    ```bash
-   git clone <url-del-repo>
-   cd campos-deportivos-elden
+   git clone <url-del-repositorio>
+   cd ProyectoElden
    ```
 
 2. **Instala las dependencias**
@@ -61,39 +30,168 @@ src/
    npm install
    ```
 
-3. **Inicia el servidor de desarrollo**
+3. **Configura Firebase**
+   - Sigue las instrucciones en [FIREBASE_SETUP.md](./FIREBASE_SETUP.md)
+   - Copia `src/services/firebase.example.ts` como `src/services/firebase.ts`
+   - Reemplaza la configuración con tus credenciales de Firebase
+
+4. **Ejecuta el proyecto**
    ```bash
    npm run dev
    ```
-   La app estará disponible en [http://localhost:5173](http://localhost:5173) (o el puerto que indique Vite).
 
-4. **Comandos adicionales**
-   - `npm run build` — Genera la versión de producción
-   - `npm run preview` — Previsualiza la build de producción
-   - `npm run lint` — Ejecuta el linter
+5. **Abre en el navegador**
+   - Ve a `http://localhost:5173`
 
-## Usuarios por defecto
+## 🔥 Configuración de Firebase
 
-- **Administrador**
-  - Email: `admin@elden.com`
-  - Contraseña: `admin123`
-- **Empleado**
-  - Email: `empleado@elden.com`
-  - Contraseña: `empleado123`
+**IMPORTANTE**: Para que la aplicación funcione correctamente, necesitas configurar Firebase. Sigue las instrucciones detalladas en [FIREBASE_SETUP.md](./FIREBASE_SETUP.md).
 
-## Roles y permisos
+### Resumen rápido:
+1. Crea un proyecto en [Firebase Console](https://console.firebase.google.com/)
+2. Habilita Authentication (Email/Password)
+3. Crea una base de datos Firestore
+4. Copia la configuración a `src/services/firebase.ts`
 
-- **Cliente:** puede reservar, ver canchas, enviar mensajes y gestionar su perfil.
-- **Empleado:** puede gestionar canchas, horarios, reservas, reportes y ver mensajes de clientes.
-- **Administrador:** acceso total a la gestión y reportes, solo ve la sección de reservas.
+## 👥 Roles de Usuario
 
-## Notas técnicas
+### Cliente
+- Crear cuenta y perfil
+- Ver canchas disponibles
+- Hacer reservas
+- Ver historial de reservas
+- Cancelar reservas propias
 
-- **Persistencia:** Todos los datos se almacenan en el navegador usando IndexedDB. No requiere backend.
-- **Seguridad:** Las contraseñas se almacenan en texto plano solo para desarrollo. No usar en producción real.
-- **Responsive:** El diseño es adaptable a dispositivos móviles y escritorio.
-- **Personalización:** Puedes modificar los deportes, canchas, horarios y métodos de pago desde la interfaz de empleado/admin.
+### Empleado
+- Todo lo del cliente
+- Gestionar reservas de otros usuarios
+- Ver reportes básicos
+- Configurar horarios de canchas
 
-## Créditos
+### Administrador
+- Todo lo del empleado
+- Gestionar usuarios
+- Configurar canchas y deportes
+- Ver reportes completos
+- Gestión completa del sistema
 
-Desarrollado por el equipo de Campos Deportivos Elden. 
+## 🏗️ Estructura del Proyecto
+
+```
+src/
+├── components/          # Componentes React
+│   ├── Admin/          # Componentes de administración
+│   ├── Auth/           # Componentes de autenticación
+│   ├── Layout/         # Componentes de layout
+│   └── Sections/       # Páginas principales
+├── contexts/           # Contextos de React
+│   ├── AuthContext.tsx # Contexto de autenticación
+│   └── DataContext.tsx # Contexto de datos
+├── services/           # Servicios
+│   ├── firebase.ts     # Configuración de Firebase
+│   └── firebase.example.ts # Ejemplo de configuración
+└── types/              # Tipos de TypeScript
+```
+
+## 🗄️ Base de Datos
+
+La aplicación usa Firebase Firestore con las siguientes colecciones:
+
+- **users**: Usuarios registrados
+- **reservations**: Reservas realizadas
+- **fields**: Canchas disponibles
+- **sports**: Deportes disponibles
+- **timeSlots**: Horarios disponibles
+- **employees**: Empleados
+- **positions**: Cargos de empleados
+- **documentTypes**: Tipos de documento
+- **paymentMethods**: Métodos de pago
+
+## 🔄 Migración desde IndexedDB
+
+Si tenías la versión anterior con IndexedDB:
+
+1. **Los datos locales se perderán** - Firebase es una base de datos en la nube
+2. **Configura Firebase** siguiendo las instrucciones
+3. **Los usuarios necesitarán registrarse nuevamente**
+4. **Las reservas se harán desde cero**
+
+### Ventajas de la migración:
+- ✅ Base de datos centralizada
+- ✅ Tiempo real entre usuarios
+- ✅ Datos persistentes
+- ✅ Escalabilidad
+- ✅ Seguridad mejorada
+
+## 🚀 Despliegue
+
+### Netlify (Recomendado)
+1. Conecta tu repositorio a Netlify
+2. Configura las variables de entorno si es necesario
+3. Despliega automáticamente
+
+### Vercel
+1. Conecta tu repositorio a Vercel
+2. Configura el framework como Vite
+3. Despliega
+
+### Firebase Hosting
+1. Instala Firebase CLI: `npm install -g firebase-tools`
+2. Inicia sesión: `firebase login`
+3. Inicializa: `firebase init hosting`
+4. Despliega: `firebase deploy`
+
+## 🐛 Solución de Problemas
+
+### Error de configuración de Firebase
+- Verifica que `src/services/firebase.ts` tenga la configuración correcta
+- Asegúrate de que Authentication esté habilitado
+- Verifica que Firestore esté creado
+
+### Los datos no se guardan
+- Revisa la consola del navegador para errores
+- Verifica las reglas de seguridad de Firestore
+- Asegúrate de que el usuario esté autenticado
+
+### Problemas de autenticación
+- Verifica que Email/Password esté habilitado en Firebase
+- Revisa que la API key sea correcta
+- Verifica que el proyecto esté activo
+
+## 📝 Scripts Disponibles
+
+```bash
+npm run dev          # Ejecutar en modo desarrollo
+npm run build        # Construir para producción
+npm run preview      # Previsualizar build de producción
+npm run lint         # Ejecutar linter
+```
+
+## 🤝 Contribuir
+
+1. Fork el proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para detalles.
+
+## 🆘 Soporte
+
+Si tienes problemas:
+1. Revisa la consola del navegador
+2. Consulta [FIREBASE_SETUP.md](./FIREBASE_SETUP.md)
+3. Revisa la [documentación de Firebase](https://firebase.google.com/docs)
+4. Abre un issue en GitHub
+
+## 🔮 Próximas Características
+
+- [ ] Notificaciones push
+- [ ] Pagos en línea
+- [ ] App móvil
+- [ ] Reportes avanzados
+- [ ] Sistema de calificaciones
+- [ ] Chat en tiempo real 

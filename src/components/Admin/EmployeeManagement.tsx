@@ -178,7 +178,7 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ onBack }
                     className="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
                     <div className="text-red-400 text-sm font-medium">
-                      6.4.1 ——————→
+                     
                     </div>
                     <Plus className="w-5 h-5" />
                   </button>
@@ -224,7 +224,7 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ onBack }
                     className="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
                     <div className="text-red-400 text-sm font-medium">
-                      6.2.1 ——————→
+                      
                     </div>
                     <Plus className="w-5 h-5" />
                   </button>
@@ -334,7 +334,7 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ onBack }
         >
           <Plus className="w-12 h-12 text-green-400 mx-auto mb-4 group-hover:scale-110 transition-transform" />
           <div className="text-red-400 text-sm font-medium mb-2">
-            6.1.1 ——————→
+            
           </div>
           <h3 className="text-xl font-bold text-white">Ingresar</h3>
         </button>
@@ -346,7 +346,7 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ onBack }
         >
           <Edit2 className="w-12 h-12 text-blue-400 mx-auto mb-4 group-hover:scale-110 transition-transform" />
           <div className="text-red-400 text-sm font-medium mb-2">
-            6.1.2 ——————→
+            
           </div>
           <h3 className="text-xl font-bold text-white">Modificar</h3>
         </button>
@@ -358,7 +358,7 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ onBack }
         >
           <Trash2 className="w-12 h-12 text-red-400 mx-auto mb-4 group-hover:scale-110 transition-transform" />
           <div className="text-red-400 text-sm font-medium mb-2">
-            6.1.3 ——————→
+           
           </div>
           <h3 className="text-xl font-bold text-white">Eliminar</h3>
         </button>
@@ -366,7 +366,7 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ onBack }
         <button className="bg-white/10 backdrop-blur-sm rounded-xl p-6 hover:bg-white/20 transition-all duration-300 text-center group">
           <Users className="w-12 h-12 text-purple-400 mx-auto mb-4 group-hover:scale-110 transition-transform" />
           <div className="text-red-400 text-sm font-medium mb-2">
-            6.1.4 ——————→
+           
           </div>
           <h3 className="text-xl font-bold text-white">Consultar</h3>
         </button>
