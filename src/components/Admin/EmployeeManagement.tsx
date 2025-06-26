@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { ArrowLeft, Plus, Edit2, Trash2, Users } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { Employee } from '../../types';
+import { DocumentTypeManagement } from './DocumentTypeManagement';
+import { PositionManagement } from './PositionManagement';
 
 interface EmployeeManagementProps {
   onBack: () => void;
@@ -20,6 +22,8 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ onBack }
     email: '',
     password: ''
   });
+  const [showDocumentType, setShowDocumentType] = useState(false);
+  const [showPosition, setShowPosition] = useState(false);
 
   const resetForm = () => {
     setFormData({
@@ -105,6 +109,13 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ onBack }
     return position ? position.name : id;
   };
 
+  if (showDocumentType) {
+    return <DocumentTypeManagement onBack={() => setShowDocumentType(false)} />;
+  }
+  if (showPosition) {
+    return <PositionManagement onBack={() => setShowPosition(false)} />;
+  }
+
   if (currentView === 'add' || currentView === 'edit') {
     return (
       <div className="p-8 max-w-4xl mx-auto">
@@ -162,10 +173,8 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ onBack }
                   <button
                     type="button"
                     className="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    onClick={() => setShowDocumentType(true)}
                   >
-                    <div className="text-red-400 text-sm font-medium">
-                     
-                    </div>
                     <Plus className="w-5 h-5" />
                   </button>
                 </div>
@@ -208,10 +217,8 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ onBack }
                   <button
                     type="button"
                     className="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    onClick={() => setShowPosition(true)}
                   >
-                    <div className="text-red-400 text-sm font-medium">
-                      
-                    </div>
                     <Plus className="w-5 h-5" />
                   </button>
                 </div>
