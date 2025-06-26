@@ -81,15 +81,14 @@ export const Reservations: React.FC = () => {
   };
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-4xl font-bold text-white">
+    <div className="p-4 sm:p-8 max-w-full md:max-w-3xl lg:max-w-6xl mx-auto">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-4xl font-bold text-white">
           {isAdmin || isEmployee ? 'Gestión de Reservas' : 'Mis Reservas'}
         </h1>
-        
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-          <div className="text-green-300 text-sm mb-2">Filtros</div>
-          <div className="flex flex-col gap-2">
+        <div className="bg-gray-800/70 backdrop-blur-sm rounded-xl p-2 sm:p-4">
+          <div className="text-green-300 text-xs sm:text-sm mb-1 sm:mb-2">Filtros</div>
+          <div className="flex flex-col gap-1 sm:gap-2">
             <div className="flex items-center gap-2">
               <input
                 type="radio"
@@ -193,10 +192,10 @@ export const Reservations: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white/10 backdrop-blur-sm rounded-xl overflow-hidden">
+      <div className="bg-gray-900/70 backdrop-blur-sm rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-800/50">
+          <table className="w-full text-xs sm:text-sm bg-transparent">
+            <thead className="bg-gray-800/80">
               <tr>
                 {(isAdmin || isEmployee) && (
                   <th className="px-6 py-4 text-left text-white font-medium">Usuario</th>

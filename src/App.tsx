@@ -15,6 +15,7 @@ import { Contact } from './components/Sections/Contact';
 import { Profile } from './components/Sections/Profile';
 import { Settings } from './components/Sections/Settings';
 import { Sport, Field } from './types';
+import { Menu } from 'lucide-react';
 
 type BookingFlow = 'sport-selection' | 'field-list' | 'field-booking';
 
@@ -28,6 +29,7 @@ function AppContent() {
   const [bookingFlow, setBookingFlow] = useState<BookingFlow>('sport-selection');
   const [selectedSport, setSelectedSport] = useState<Sport | null>(null);
   const [selectedField, setSelectedField] = useState<Field | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const isAdmin = user?.role === 'admin';
   const isEmployee = user?.role === 'employee';
@@ -183,11 +185,34 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-900 via-gray-900 to-black flex">
-      <Sidebar activeSection={activeSection} onSectionChange={handleSectionChange} />
-      
+      {/* Sidebar solo en desktop */}
+      <div className="hidden md:flex">
+        <Sidebar activeSection={activeSection} onSectionChange={handleSectionChange} />
+      </div>
+      {/* Sidebar para móvil */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 flex md:hidden">
+          <div className={`w-64 h-full bg-gray-900/95 backdrop-blur-sm flex flex-col transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+            style={{ willChange: 'transform' }}
+          >
+            <Sidebar activeSection={activeSection} onSectionChange={(section) => { setSidebarOpen(false); handleSectionChange(section); }} onClose={() => setSidebarOpen(false)} />
+          </div>
+          <div className="flex-1 bg-black/50" onClick={() => setSidebarOpen(false)}></div>
+        </div>
+      )}
       <div className="flex-1">
         <main className="relative min-h-screen">
-          <div className="absolute inset-0 bg-[url('https://images.pexels.com/photos/274506/pexels-photo-274506.jpeg')] bg-cover bg-center opacity-20"></div>
+          {/* Botón de menú hamburguesa solo en móvil */}
+          <button
+            className="absolute top-4 left-4 z-40 md:hidden bg-gray-900/80 p-2 rounded-lg text-white"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+          {/* Imagen de fondo ajustada para móvil */}
+          <div className="absolute inset-0 bg-[url('https://images.pexels.com/photos/274506/pexels-photo-274506.jpeg')] bg-cover bg-center opacity-10 sm:opacity-20"></div>
+          {/* Overlay adicional para móvil */}
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-900/90 via-gray-900/80 to-black/95 sm:from-gray-900/70 sm:via-gray-900/60 sm:to-black/80"></div>
           <div className="relative z-10">
             {renderContent()}
           </div>
