@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { DatabaseService, Employee, Position, DocumentType, PaymentMethod, Sport, Field, TimeSlot, Reservation } from '../services/firebase';
 import LoadingSpinner from '../components/Layout/LoadingSpinner';
+import { AuthService } from '../services/firebase';
 
 interface DataContextType {
   // Employees
   employees: Employee[];
-  addEmployee: (employee: Omit<Employee, 'id' | 'createdAt'>) => Promise<void>;
+  addEmployee: (employee: Omit<Employee, 'id' | 'createdAt'> & { password: string }) => Promise<void>;
   updateEmployee: (id: string, employee: Partial<Employee>) => Promise<void>;
   deleteEmployee: (id: string) => Promise<void>;
   
@@ -150,10 +151,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // Employee management functions
-  const addEmployee = async (employee: Omit<Employee, 'id' | 'createdAt'>) => {
+  const addEmployee = async (employee: Omit<Employee, 'id' | 'createdAt'> & { password: string }) => {
     try {
-      const newEmployee = await DatabaseService.add<Employee>('employees', employee);
-      setEmployees(prev => [...prev, newEmployee]);
+      // Crear usuario en AuthService
+      const user = await AuthService.register(employee.email, employee.password, {
+        name: employee.name,
+        email: employee.email,
+        phone: employee.phone,
+        documentType: employee.documentType,
+        documentNumber: employee.documentNumber,
+        role: 'employee'
+      });
+      // Guardar empleado en la colección employees (sin la contraseña)
+      const { password, ...employeeData } = employee;
+      const newEmployee = await DatabaseService.add<Employee>('employees', employeeData);
+      setEmployees((prev: Employee[]) => [...prev, newEmployee]);
       console.log('✅ Employee added:', newEmployee);
     } catch (error) {
       console.error('❌ Error adding employee:', error);
@@ -164,7 +176,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateEmployee = async (id: string, employee: Partial<Employee>) => {
     try {
       await DatabaseService.update<Employee>('employees', id, employee);
-      setEmployees(prev => prev.map(emp => emp.id === id ? { ...emp, ...employee } : emp));
+      setEmployees((prev: Employee[]) => prev.map((emp: Employee) => emp.id === id ? { ...emp, ...employee } : emp));
       console.log('✅ Employee updated:', id);
     } catch (error) {
       console.error('❌ Error updating employee:', error);
@@ -175,7 +187,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const deleteEmployee = async (id: string) => {
     try {
       await DatabaseService.delete('employees', id);
-      setEmployees(prev => prev.filter(emp => emp.id !== id));
+      setEmployees((prev: Employee[]) => prev.filter((emp: Employee) => emp.id !== id));
       console.log('✅ Employee deleted:', id);
     } catch (error) {
       console.error('❌ Error deleting employee:', error);

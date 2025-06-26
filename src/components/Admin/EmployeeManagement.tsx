@@ -12,24 +12,24 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ onBack }
   const [currentView, setCurrentView] = useState<'list' | 'add' | 'edit' | 'delete'>('list');
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    name: '',
     documentType: '',
     documentNumber: '',
-    position: '',
+    positionId: '',
     phone: '',
-    email: ''
+    email: '',
+    password: ''
   });
 
   const resetForm = () => {
     setFormData({
-      firstName: '',
-      lastName: '',
+      name: '',
       documentType: '',
       documentNumber: '',
-      position: '',
+      positionId: '',
       phone: '',
-      email: ''
+      email: '',
+      password: ''
     });
     setSelectedEmployee(null);
   };
@@ -42,13 +42,13 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ onBack }
   const handleEdit = (employee: Employee) => {
     setSelectedEmployee(employee);
     setFormData({
-      firstName: employee.firstName,
-      lastName: employee.lastName,
+      name: employee.name,
       documentType: employee.documentType,
       documentNumber: employee.documentNumber,
-      position: employee.position,
+      positionId: employee.positionId,
       phone: employee.phone,
-      email: employee.email || ''
+      email: employee.email || '',
+      password: ''
     });
     setCurrentView('edit');
   };
@@ -63,21 +63,21 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ onBack }
     
     if (currentView === 'add') {
       addEmployee({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+        name: formData.name,
         documentType: formData.documentType,
         documentNumber: formData.documentNumber,
-        position: formData.position,
+        positionId: formData.positionId,
         phone: formData.phone,
-        email: formData.email
+        email: formData.email,
+        isActive: true,
+        password: formData.password
       });
     } else if (currentView === 'edit' && selectedEmployee) {
       updateEmployee(selectedEmployee.id, {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+        name: formData.name,
         documentType: formData.documentType,
         documentNumber: formData.documentNumber,
-        position: formData.position,
+        positionId: formData.positionId,
         phone: formData.phone,
         email: formData.email
       });
@@ -95,13 +95,13 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ onBack }
     }
   };
 
-  const getDocumentTypeName = (id: string) => {
-    const docType = documentTypes.find(dt => dt.id === id);
+  const getDocumentTypeName = (id: string): string => {
+    const docType = documentTypes.find((dt) => dt.id === id);
     return docType ? `${docType.code} - ${docType.name}` : id;
   };
 
-  const getPositionName = (id: string) => {
-    const position = positions.find(p => p.id === id);
+  const getPositionName = (id: string): string => {
+    const position = positions.find((p) => p.id === id);
     return position ? position.name : id;
   };
 
@@ -127,29 +127,15 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ onBack }
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-white font-medium mb-3 text-lg">
-                  Nombres
+                  Nombre completo
                 </label>
                 <input
                   type="text"
                   required
-                  value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="Deibyd Alexander"
-                />
-              </div>
-
-              <div>
-                <label className="block text-white font-medium mb-3 text-lg">
-                  Apellidos
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="Castillo Aguirre"
+                  placeholder="Nombre completo"
                 />
               </div>
             </div>
@@ -208,8 +194,8 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ onBack }
                 <div className="flex gap-2">
                   <select
                     required
-                    value={formData.position}
-                    onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                    value={formData.positionId}
+                    onChange={(e) => setFormData({ ...formData, positionId: e.target.value })}
                     className="flex-1 px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   >
                     <option value="">Seleccionar cargo</option>
@@ -242,6 +228,36 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ onBack }
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   placeholder="3168134245"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-white font-medium mb-3 text-lg">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="empleado@ejemplo.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-white font-medium mb-3 text-lg">
+                  Contraseña
+                </label>
+                <input
+                  type="text"
+                  required={currentView === 'add'}
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Contraseña para el empleado"
                 />
               </div>
             </div>
@@ -288,7 +304,7 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ onBack }
             <p className="text-gray-300">
               ¿Estás seguro de que deseas eliminar al empleado{' '}
               <span className="font-bold text-white">
-                {selectedEmployee?.firstName} {selectedEmployee?.lastName}
+                {selectedEmployee?.name}
               </span>?
             </p>
             <p className="text-red-400 text-sm mt-2">Esta acción no se puede deshacer.</p>
@@ -389,13 +405,13 @@ export const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ onBack }
                 {employees.map((employee) => (
                   <tr key={employee.id} className="hover:bg-white/5 transition-colors">
                     <td className="px-6 py-4 text-white">
-                      {employee.firstName} {employee.lastName}
+                      {employee.name}
                     </td>
                     <td className="px-6 py-4 text-green-300">
                       {getDocumentTypeName(employee.documentType)} - {employee.documentNumber}
                     </td>
                     <td className="px-6 py-4 text-green-300">
-                      {getPositionName(employee.position)}
+                      {getPositionName(employee.positionId)}
                     </td>
                     <td className="px-6 py-4 text-green-300">{employee.phone}</td>
                     <td className="px-6 py-4 text-right">
