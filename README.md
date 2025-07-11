@@ -1,197 +1,183 @@
-# Campos Deportivos Elden
 
-Sistema de gestión de reservas para campos deportivos con base de datos en tiempo real usando Firebase.
+# Elden Sports Fields
 
-## 🚀 Características
+Real-time sports field reservation management system with Firebase database.
 
-- **Base de datos centralizada**: Todos los usuarios comparten la misma base de datos
-- **Tiempo real**: Las reservas se actualizan instantáneamente para todos los usuarios
-- **Autenticación segura**: Sistema de login/registro con Firebase Auth
-- **Gestión de reservas**: Crear, editar y cancelar reservas
-- **Múltiples roles**: Administrador, empleado y cliente
-- **Interfaz moderna**: Diseño responsive con Tailwind CSS
-- **TypeScript**: Código tipado y seguro
+## 🚀 Features
 
-## 📋 Requisitos
+- **Centralized Database**: All users share the same real-time database
+- **Real-time Updates**: Reservations update instantly for all users
+- **Secure Authentication**: Login/register system with Firebase Auth
+- **Reservation Management**: Create, edit, and cancel reservations
+- **Multiple Roles**: Administrator, employee, and client roles
+- **Modern Interface**: Responsive design with Tailwind CSS
+- **TypeScript**: Type-safe and secure code
 
-- Node.js 16 o superior
-- Cuenta de Firebase (gratuita)
+## 📋 Requirements
 
-## 🛠️ Instalación
+- Node.js 16 or higher
+- Firebase account (free)
 
-1. **Clona el repositorio**
+## 🛠️ Installation
+
+1. **Clone the repository**
    ```bash
-   git clone <url-del-repositorio>
+   git clone <repository-url>
    cd ProyectoElden
    ```
 
-2. **Instala las dependencias**
+2. **Install dependencies**
    ```bash
    npm install
    ```
 
-3. **Configura Firebase**
-   - Sigue las instrucciones en [FIREBASE_SETUP.md](./FIREBASE_SETUP.md)
-   - Copia `src/services/firebase.example.ts` como `src/services/firebase.ts`
-   - Reemplaza la configuración con tus credenciales de Firebase
+3. **Configure Firebase**
+   - Follow instructions in [FIREBASE_SETUP.md](./FIREBASE_SETUP.md)
+   - Copy `src/services/firebase.example.ts` as `src/services/firebase.ts`
+   - Replace configuration with your Firebase credentials
 
-4. **Ejecuta el proyecto**
+4. **Run the project**
    ```bash
    npm run dev
    ```
 
-5. **Abre en el navegador**
-   - Ve a `http://localhost:5173`
+5. **Open in browser**
+   - Go to `http://localhost:5173`
 
-## 🔥 Configuración de Firebase
+## 🔥 Firebase Configuration
 
-**IMPORTANTE**: Para que la aplicación funcione correctamente, necesitas configurar Firebase. Sigue las instrucciones detalladas en [FIREBASE_SETUP.md](./FIREBASE_SETUP.md).
+**IMPORTANT**: For the application to work correctly, you need to configure Firebase. Follow the detailed instructions in [FIREBASE_SETUP.md](./FIREBASE_SETUP.md).
 
-### Resumen rápido:
-1. Crea un proyecto en [Firebase Console](https://console.firebase.google.com/)
-2. Habilita Authentication (Email/Password)
-3. Crea una base de datos Firestore
-4. Copia la configuración a `src/services/firebase.ts`
+### Quick Summary:
+1. Create a project in [Firebase Console](https://console.firebase.google.com/)
+2. Enable Authentication (Email/Password)
+3. Create a Firestore database
+4. Copy configuration to `src/services/firebase.ts`
 
-## 👥 Roles de Usuario
+## 👥 User Roles
 
-### Cliente
-- Crear cuenta y perfil
-- Ver canchas disponibles
-- Hacer reservas
-- Ver historial de reservas
-- Cancelar reservas propias
+### Client
+- Create account and profile
+- View available fields
+- Make reservations
+- View reservation history
+- Cancel own reservations
 
-### Empleado
-- Todo lo del cliente
-- Gestionar reservas de otros usuarios
-- Ver reportes básicos
-- Configurar horarios de canchas
+### Employee
+- Everything from client role
+- Manage other users' reservations
+- View basic reports
+- Configure field schedules
 
-### Administrador
-- Todo lo del empleado
-- Gestionar usuarios
-- Configurar canchas y deportes
-- Ver reportes completos
-- Gestión completa del sistema
+### Administrator
+- Everything from employee role
+- Manage users
+- Configure fields and sports
+- View complete reports
+- Full system management
 
-## 🏗️ Estructura del Proyecto
 
-```
-src/
-├── components/          # Componentes React
-│   ├── Admin/          # Componentes de administración
-│   ├── Auth/           # Componentes de autenticación
-│   ├── Layout/         # Componentes de layout
-│   └── Sections/       # Páginas principales
-├── contexts/           # Contextos de React
-│   ├── AuthContext.tsx # Contexto de autenticación
-│   └── DataContext.tsx # Contexto de datos
-├── services/           # Servicios
-│   ├── firebase.ts     # Configuración de Firebase
-│   └── firebase.example.ts # Ejemplo de configuración
-└── types/              # Tipos de TypeScript
-```
+## 🗄️ Database
 
-## 🗄️ Base de Datos
+The application uses Firebase Firestore with the following collections:
 
-La aplicación usa Firebase Firestore con las siguientes colecciones:
+- **users**: Registered users
+- **reservations**: Made reservations
+- **fields**: Available fields
+- **sports**: Available sports
+- **timeSlots**: Available time slots
+- **employees**: Employees
+- **positions**: Employee positions
+- **documentTypes**: Document types
+- **paymentMethods**: Payment methods
 
-- **users**: Usuarios registrados
-- **reservations**: Reservas realizadas
-- **fields**: Canchas disponibles
-- **sports**: Deportes disponibles
-- **timeSlots**: Horarios disponibles
-- **employees**: Empleados
-- **positions**: Cargos de empleados
-- **documentTypes**: Tipos de documento
-- **paymentMethods**: Métodos de pago
+## 🔄 Migration from IndexedDB
 
-## 🔄 Migración desde IndexedDB
+If you had the previous version with IndexedDB:
 
-Si tenías la versión anterior con IndexedDB:
+1. **Local data will be lost** - Firebase is a cloud database
+2. **Configure Firebase** following the instructions
+3. **Users will need to register again**
+4. **Reservations will start from scratch**
 
-1. **Los datos locales se perderán** - Firebase es una base de datos en la nube
-2. **Configura Firebase** siguiendo las instrucciones
-3. **Los usuarios necesitarán registrarse nuevamente**
-4. **Las reservas se harán desde cero**
+### Migration Benefits:
+- ✅ Centralized database
+- ✅ Real-time between users
+- ✅ Persistent data
+- ✅ Scalability
+- ✅ Enhanced security
 
-### Ventajas de la migración:
-- ✅ Base de datos centralizada
-- ✅ Tiempo real entre usuarios
-- ✅ Datos persistentes
-- ✅ Escalabilidad
-- ✅ Seguridad mejorada
+## 🚀 Deployment
 
-## 🚀 Despliegue
-
-### Netlify (Recomendado)
-1. Conecta tu repositorio a Netlify
-2. Configura las variables de entorno si es necesario
-3. Despliega automáticamente
+### Netlify (Recommended)
+1. Connect your repository to Netlify
+2. Configure environment variables if needed
+3. Deploy automatically
 
 ### Vercel
-1. Conecta tu repositorio a Vercel
-2. Configura el framework como Vite
-3. Despliega
+1. Connect your repository to Vercel
+2. Configure framework as Vite
+3. Deploy
 
 ### Firebase Hosting
-1. Instala Firebase CLI: `npm install -g firebase-tools`
-2. Inicia sesión: `firebase login`
-3. Inicializa: `firebase init hosting`
-4. Despliega: `firebase deploy`
+1. Install Firebase CLI: `npm install -g firebase-tools`
+2. Sign in: `firebase login`
+3. Initialize: `firebase init hosting`
+4. Deploy: `firebase deploy`
 
-## 🐛 Solución de Problemas
+## 🐛 Troubleshooting
 
-### Error de configuración de Firebase
-- Verifica que `src/services/firebase.ts` tenga la configuración correcta
-- Asegúrate de que Authentication esté habilitado
-- Verifica que Firestore esté creado
+### Firebase Configuration Error
+- Verify that `src/services/firebase.ts` has correct configuration
+- Ensure Authentication is enabled
+- Verify Firestore is created
 
-### Los datos no se guardan
-- Revisa la consola del navegador para errores
-- Verifica las reglas de seguridad de Firestore
-- Asegúrate de que el usuario esté autenticado
+### Data Not Saving
+- Check browser console for errors
+- Verify Firestore security rules
+- Ensure user is authenticated
 
-### Problemas de autenticación
-- Verifica que Email/Password esté habilitado en Firebase
-- Revisa que la API key sea correcta
-- Verifica que el proyecto esté activo
+### Authentication Issues
+- Verify Email/Password is enabled in Firebase
+- Check that API key is correct
+- Verify project is active
 
-## 📝 Scripts Disponibles
+## 📝 Available Scripts
 
 ```bash
-npm run dev          # Ejecutar en modo desarrollo
-npm run build        # Construir para producción
-npm run preview      # Previsualizar build de producción
-npm run lint         # Ejecutar linter
+npm run dev          # Run in development mode
+npm run build        # Build for production
+npm run preview      # Preview production build
+npm run lint         # Run linter
 ```
 
-## 🤝 Contribuir
+## 🤝 Contributing
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+1. Fork the project
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## 📄 Licencia
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
-Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para detalles.
+## 📄 License
 
-## 🆘 Soporte
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-Si tienes problemas:
-1. Revisa la consola del navegador
-2. Consulta [FIREBASE_SETUP.md](./FIREBASE_SETUP.md)
-3. Revisa la [documentación de Firebase](https://firebase.google.com/docs)
-4. Abre un issue en GitHub
+## 🆘 Support
 
-## 🔮 Próximas Características
+If you have issues:
+1. Check browser console
+2. Consult [FIREBASE_SETUP.md](./FIREBASE_SETUP.md)
+3. Review [Firebase documentation](https://firebase.google.com/docs)
+4. Open an issue on GitHub
 
-- [ ] Notificaciones push
-- [ ] Pagos en línea
-- [ ] App móvil
-- [ ] Reportes avanzados
-- [ ] Sistema de calificaciones
-- [ ] Chat en tiempo real 
+## 🔮 Upcoming Features
+
+- [ ] Push notifications
+- [ ] Online payments
+- [ ] Mobile app
+- [ ] Advanced reports
+- [ ] Rating system
+- [ ] Real-time chat
