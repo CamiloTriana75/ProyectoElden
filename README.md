@@ -181,3 +181,18 @@ If you have issues:
 - [ ] Advanced reports
 - [ ] Rating system
 - [ ] Real-time chat
+---
+
+## Project Setup Instructions
+
+1. Install Unity Hub.
+2. Open this project folder inside Unity Hub.
+3. Press Play in the Unity Editor to run the game.
+
+## Contributing
+
+Pull requests are welcome. Please:
+- Use a new branch
+- Write clear commit messages
+- Make small, focused changes
+
