@@ -11,6 +11,12 @@ import { SportManagement } from '../Admin/SportManagement';
 import { FieldManagement } from '../Admin/FieldManagement';
 import { TimeSlotManagement } from '../Admin/TimeSlotManagement';
 import { DatabaseManagement } from '../Admin/DatabaseManagement';
+import {
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword,
+} from "firebase/auth";
+import { auth } from "../../services/firebase";
 
 export const Settings: React.FC = () => {
   const { user } = useAuth();
@@ -25,6 +31,48 @@ export const Settings: React.FC = () => {
 
   const [theme, setTheme] = useState('dark');
   const [language, setLanguage] = useState('es');
+  const [showChangePasswordForm, setShowChangePasswordForm] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [statusMessage, setStatusMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+   const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatusMessage("");
+    setErrorMessage("");
+
+    if (newPassword !== confirmNewPassword) {
+      setErrorMessage("Las contraseñas nuevas no coinciden.");
+      return;
+    }
+
+    const user = auth.currentUser;
+    if (!user || !user.email) {
+      setErrorMessage("No se pudo verificar el usuario.");
+      return;
+    }
+
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+
+    try {
+      await reauthenticateWithCredential(user, credential);
+      await updatePassword(user, newPassword);
+      setStatusMessage("Contraseña actualizada correctamente.");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setShowChangePasswordForm(false);
+    } catch (error: any) {
+      if (error.code === "auth/wrong-password") {
+        setErrorMessage("La contraseña actual es incorrecta.");
+      } else {
+        setErrorMessage("Error al cambiar la contraseña.");
+      }
+    }
+  };
+
 
   // If user is admin or employee, show admin panel
   if (user?.role === 'admin' || user?.role === 'employee') {
@@ -162,11 +210,74 @@ export const Settings: React.FC = () => {
             <h2 className="text-2xl font-bold text-white">Seguridad</h2>
           </div>
 
-          <div className="space-y-4">
-            <button className="w-full text-left bg-gray-700/50 hover:bg-gray-600/50 p-4 rounded-lg transition-colors">
+           <div className="space-y-4">
+            {/* Change Password */}
+            <button
+              className="w-full text-left bg-gray-700/50 hover:bg-gray-600/50 p-4 rounded-lg transition-colors"
+              onClick={() => setShowChangePasswordForm(!showChangePasswordForm)}
+            >
               <h3 className="text-white font-medium mb-1">Cambiar Contraseña</h3>
               <p className="text-gray-400 text-sm">Actualiza tu contraseña por seguridad</p>
             </button>
+            {showChangePasswordForm && (
+              <form
+                onSubmit={handleChangePassword}
+                className="bg-gray-800 p-4 rounded-lg space-y-4"
+              >
+                <div>
+                  <label className="block text-white text-sm mb-1">
+                    Contraseña Actual
+                  </label>
+                  <input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    required
+                    className="w-full p-2 rounded bg-gray-700 text-white focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-white text-sm mb-1">
+                    Nueva Contraseña
+                  </label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    className="w-full p-2 rounded bg-gray-700 text-white focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-white text-sm mb-1">
+                    Confirmar Nueva Contraseña
+                  </label>
+                  <input
+                    type="password"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    required
+                    className="w-full p-2 rounded bg-gray-700 text-white focus:outline-none"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded transition"
+                >
+                  Guardar Cambios
+                </button>
+
+                {statusMessage && (
+                  <p className="text-green-400 text-sm">{statusMessage}</p>
+                )}
+                {errorMessage && (
+                  <p className="text-red-400 text-sm">{errorMessage}</p>
+                )}
+              </form>
+            )}
 
             <button className="w-full text-left bg-gray-700/50 hover:bg-gray-600/50 p-4 rounded-lg transition-colors">
               <h3 className="text-white font-medium mb-1">Autenticación de Dos Factores</h3>
