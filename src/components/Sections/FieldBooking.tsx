@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Calendar, Clock, DollarSign } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock } from 'lucide-react';
 import { Field } from '../../types';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -14,15 +14,16 @@ interface FieldBookingProps {
 
 export const FieldBooking: React.FC<FieldBookingProps> = ({ field, onBack, onBookingComplete }) => {
   const { user } = useAuth();
-  const { getAvailableTimeSlots, addReservation, sports, timeSlots, reservations } = useData();
+  const { addReservation, timeSlots, reservations } = useData();
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
   const [isBooking, setIsBooking] = useState(false);
-  
+  const [validationError, setValidationError] = useState<string | null>(null);
+
   // Uso fallback para evitar undefined en field y slot
   const fieldId = field.id || '';
-  const fieldName = field.name || '';
   const allDaySlots = timeSlots.filter(ts => ts.fieldId === fieldId && ts.isActive && ((ts as any).allDays === true || (ts as any).date === selectedDate));
+  
   // Defino el tipo local para los slots con price e isAvailable
   type SlotWithStatus = typeof allDaySlots[number] & { isAvailable: boolean; price: number };
   const confirmedReservations = reservations.filter(r => r.fieldId === fieldId && r.date === selectedDate && r.status === 'confirmed');
@@ -38,17 +39,39 @@ export const FieldBooking: React.FC<FieldBookingProps> = ({ field, onBack, onBoo
   });
 
   const selectedSlot = slotsWithStatus.find(slot => slot.id === selectedTimeSlot) || null;
-  const sport = sports.find(s => s.id === field.sportId) || { name: '', icon: '', color: '' };
-
+  
   const handleBooking = async () => {
     if (!selectedTimeSlot || !selectedSlot || !user) return;
     
+    // Safety Checks
+    if (!user.id || !field.id) {
+      setValidationError('User or field information is missing');
+      return;
+    }
+
+    // Clear any previous errors
+    setValidationError(null);
+
     // Validar que los campos requeridos estén presentes
     if (!selectedSlot.startTime || !selectedSlot.endTime) {
       console.error('❌ Error: startTime o endTime no están definidos');
       return;
     }
     
+    // Check if slot is still available (double-check)
+    if (!selectedSlot.isAvailable) {
+      setValidationError('This time slot is no longer available');
+      return;
+    }
+    
+    // Check business hours (adjust times as needed)
+    const slotHour = parseInt(selectedSlot.startTime.split(':')[0]);
+    if (slotHour < 8 || slotHour > 22) {
+      setValidationError('Bookings are only available between 8 AM and 10 PM');
+      return;
+    }
+
+    // Only set this if validation passes
     setIsBooking(true);
     
     // Simulate API call
@@ -64,10 +87,6 @@ export const FieldBooking: React.FC<FieldBookingProps> = ({ field, onBack, onBoo
       totalPrice: selectedSlot.price,
       paymentMethodId: 'default',
       status: 'pending',
-      sportName: sport?.name || '',
-      fieldName: field.name,
-      timeSlot: `${selectedSlot.startTime}-${selectedSlot.endTime}`,
-      timeSlotId: selectedSlot.id
     });
     
     setIsBooking(false);
@@ -109,6 +128,12 @@ export const FieldBooking: React.FC<FieldBookingProps> = ({ field, onBack, onBoo
           />
         </div>
       </div>
+
+    {validationError && (
+        <div className="bg-red-500/20 border border-red-500 text-red-200 px-4 py-3 rounded-lg mb-6">
+          {validationError}
+        </div>
+      )}
 
       {slotsWithStatus.length === 0 ? (
         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-12 text-center">
