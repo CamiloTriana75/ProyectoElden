@@ -6,6 +6,19 @@ import { useData } from '../../contexts/DataContext';
 export const Profile: React.FC = () => {
   const { user } = useAuth();
   const { reservations } = useData();
+  const registrationDate = user?.createdAt?.toDate
+  ? user.createdAt.toDate()
+  : user?.createdAt
+  ? new Date(user.createdAt)
+  : null;
+
+const formattedRegistration = registrationDate
+  ? registrationDate.toLocaleDateString('es-ES', { year: 'numeric', month: 'long' })
+  : null;
+
+const formattedFullDate = registrationDate
+  ? registrationDate.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
+  : null;
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -74,7 +87,7 @@ export const Profile: React.FC = () => {
           <h2 className="text-2xl font-bold text-white mb-2">{user?.name}</h2>
           <p className="text-green-300 mb-4">Usuario Activo</p>
           <div className="bg-green-500/20 text-green-300 px-4 py-2 rounded-lg text-sm">
-            Miembro desde Enero 2025
+            {formattedRegistration ? `Miembro desde ${formattedRegistration}` : 'Fecha no disponible'}
           </div>
         </div>
 
@@ -173,7 +186,7 @@ export const Profile: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Fecha de Registro
                 </label>
-                <p className="text-white text-lg">15 de Enero, 2025</p>
+                <p className="text-white text-lg">{formattedFullDate || 'Fecha no disponible'}</p>
               </div>
             </div>
           </div>
