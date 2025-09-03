@@ -6,10 +6,11 @@ import { useData } from '../../contexts/DataContext';
 interface FieldListProps {
   sport: Sport;
   onFieldSelect: (field: Field) => void;
+  onViewDetails: (field: Field) => void; // New prop for viewing details
   onBack: () => void;
 }
 
-export const FieldList: React.FC<FieldListProps> = ({ sport, onFieldSelect, onBack }) => {
+export const FieldList: React.FC<FieldListProps> = ({ sport, onFieldSelect, onViewDetails, onBack }) => {
   const { fields } = useData();
   const sportFields = fields.filter(field => field.sportId === sport.id);
 
@@ -36,7 +37,7 @@ export const FieldList: React.FC<FieldListProps> = ({ sport, onFieldSelect, onBa
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
-          {sportFields.map((field, index) => (
+          {sportFields.map((field) => (
             <div key={field.id} className="bg-white/10 backdrop-blur-sm rounded-xl overflow-hidden group hover:bg-white/20 transition-all duration-300">
               <div className="aspect-video bg-gray-800 overflow-hidden">
                 <img
@@ -61,12 +62,20 @@ export const FieldList: React.FC<FieldListProps> = ({ sport, onFieldSelect, onBa
                   </div>
                 </div>
                 
-                <button
-                  onClick={() => onFieldSelect(field)}
-                  className="w-full mt-2 sm:mt-4 bg-gray-700/50 text-white py-2 sm:py-3 rounded-lg font-medium hover:bg-green-600 transition-all duration-300 text-sm sm:text-base"
-                >
-                  Reservar
-                </button>
+                <div className="flex gap-2 mt-2 sm:mt-4">
+                  <button
+                    onClick={() => onViewDetails(field)}
+                    className="flex-1 bg-gray-700/50 text-white py-2 sm:py-3 rounded-lg font-medium hover:bg-blue-600 transition-all duration-300 text-sm sm:text-base"
+                  >
+                    Ver Detalles
+                  </button>
+                  <button
+                    onClick={() => onFieldSelect(field)}
+                    className="flex-1 bg-gray-700/50 text-white py-2 sm:py-3 rounded-lg font-medium hover:bg-green-600 transition-all duration-300 text-sm sm:text-base"
+                  >
+                    Reservar
+                  </button>
+                </div>
               </div>
             </div>
           ))}

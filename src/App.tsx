@@ -9,6 +9,7 @@ import { Home } from './components/Sections/Home';
 import { SportSelection } from './components/Sections/SportSelection';
 import { FieldList } from './components/Sections/FieldList';
 import { FieldBooking } from './components/Sections/FieldBooking';
+import { FieldDetails } from './components/Sections/FieldDetails'; // Import FieldDetails
 import { Reservations } from './components/Sections/Reservations';
 import { Reports } from './components/Sections/Reports';
 import { Contact } from './components/Sections/Contact';
@@ -17,7 +18,7 @@ import { Settings } from './components/Sections/Settings';
 import { Sport, Field } from './types';
 import { Menu } from 'lucide-react';
 
-type BookingFlow = 'sport-selection' | 'field-list' | 'field-booking';
+type BookingFlow = 'sport-selection' | 'field-list' | 'field-booking' | 'field-details';
 
 function AppContent() {
   const { user, isLoading } = useAuth();
@@ -70,6 +71,11 @@ function AppContent() {
     setBookingFlow('field-booking');
   };
 
+  const handleViewFieldDetails = (field: Field) => {
+    setSelectedField(field);
+    setBookingFlow('field-details');
+  };
+
   const handleBookingComplete = () => {
     setActiveSection('reservas');
     setBookingFlow('sport-selection');
@@ -84,6 +90,11 @@ function AppContent() {
   };
 
   const handleBackToFieldList = () => {
+    setBookingFlow('field-list');
+    setSelectedField(null);
+  };
+
+  const handleBackToFieldListFromDetails = () => {
     setBookingFlow('field-list');
     setSelectedField(null);
   };
@@ -156,7 +167,8 @@ function AppContent() {
             return (
               <FieldList
                 sport={selectedSport!}
-                onFieldSelect={handleFieldSelect}
+                onFieldSelect={handleFieldSelect} // For booking
+                onViewDetails={handleViewFieldDetails} // For viewing details
                 onBack={handleBackToSportSelection}
               />
             );
@@ -166,6 +178,13 @@ function AppContent() {
                 field={selectedField!}
                 onBack={handleBackToFieldList}
                 onBookingComplete={handleBookingComplete}
+              />
+            );
+          case 'field-details':
+            return (
+              <FieldDetails
+                field={selectedField!}
+                onBack={handleBackToFieldListFromDetails}
               />
             );
         }

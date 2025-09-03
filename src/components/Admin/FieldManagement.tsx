@@ -1,69 +1,92 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Plus, Edit2, Trash2, Building, Clock, Calendar } from 'lucide-react';
-import { useData } from '../../contexts/DataContext';
-import { Field, TimeSlot } from '../../types';
+import React, { useState } from "react";
+import {
+  ArrowLeft,
+  Plus,
+  Edit2,
+  Trash2,
+  Building,
+  Clock,
+} from "lucide-react";
+import { useData } from "../../contexts/DataContext";
+import { Field, TimeSlot } from "../../types";
+import { FieldDetails } from "../Sections/FieldDetails";
 
 interface FieldManagementProps {
   onBack: () => void;
 }
 
 export const FieldManagement: React.FC<FieldManagementProps> = ({ onBack }) => {
-  const { fields, sports, addField, updateField, deleteField, timeSlots, addTimeSlot, updateTimeSlot, deleteTimeSlot, getFieldTimeSlots } = useData();
-  const [currentView, setCurrentView] = useState<'list' | 'form' | 'schedules'>('list');
-  const [selectedSport, setSelectedSport] = useState<string>('');
+  const {
+    fields,
+    sports,
+    addField,
+    updateField,
+    deleteField,
+    addTimeSlot,
+    deleteTimeSlot,
+    getFieldTimeSlots,
+  } = useData();
+
+  const [currentView, setCurrentView] = useState<
+    "list" | "form" | "schedules" | "details"
+  >("list");
+  const [selectedSport, setSelectedSport] = useState<string>("");
   const [editingField, setEditingField] = useState<Field | null>(null);
   const [selectedField, setSelectedField] = useState<Field | null>(null);
   const [formData, setFormData] = useState({
-    id: '',
-    name: '',
-    sportId: '',
-    description: '',
-    image: '',
+    id: "",
+    name: "",
+    sportId: "",
+    description: "",
+    image: "",
+    images: [] as string[], // new for gallery
     features: [] as string[],
-    pricePerHour: 0
+    pricePerHour: 0,
   });
-  const [newFeature, setNewFeature] = useState('');
-  
+  const [newFeature, setNewFeature] = useState("");
+
   // Schedule form data
   const [scheduleForm, setScheduleForm] = useState({
-    startTime: '',
-    endTime: '',
+    startTime: "",
+    endTime: "",
     price: 0,
-    dayOfWeek: 'all',
-    isActive: true
+    dayOfWeek: "all",
+    isActive: true,
   });
 
   const resetForm = () => {
     setFormData({
-      id: '',
-      name: '',
-      sportId: '',
-      description: '',
-      image: '',
+      id: "",
+      name: "",
+      sportId: "",
+      description: "",
+      image: "",
+      images: [],
       features: [],
-      pricePerHour: 0
+      pricePerHour: 0,
     });
-    setNewFeature('');
+    setNewFeature("");
     setEditingField(null);
-    setCurrentView('list');
+    setCurrentView("list");
   };
 
   const resetScheduleForm = () => {
     setScheduleForm({
-      startTime: '',
-      endTime: '',
+      startTime: "",
+      endTime: "",
       price: 0,
-      dayOfWeek: 'all',
-      isActive: true
+      dayOfWeek: "all",
+      isActive: true,
     });
   };
 
   const handleAdd = () => {
     resetForm();
-    setCurrentView('form');
+    setCurrentView("form");
   };
 
   const handleEdit = (field: Field) => {
+    if (!field.id) return;
     setEditingField(field);
     setFormData({
       id: field.id,
@@ -71,48 +94,52 @@ export const FieldManagement: React.FC<FieldManagementProps> = ({ onBack }) => {
       sportId: field.sportId,
       description: field.description,
       image: field.image,
+      images: field.images || [],
       features: [...field.features],
-      pricePerHour: field.pricePerHour
+      pricePerHour: field.pricePerHour,
     });
-    setCurrentView('form');
+    setCurrentView("form");
   };
+
 
   const handleManageSchedules = (field: Field) => {
     setSelectedField(field);
-    setCurrentView('schedules');
+    setCurrentView("schedules");
+  };
+
+  const handleViewDetails = (field: Field) => {
+    setSelectedField(field);
+    setCurrentView("details");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (editingField) {
-      updateField(editingField.id, {
-        name: formData.name,
-        sportId: formData.sportId,
-        description: formData.description,
-        image: formData.image,
-        features: formData.features,
-        pricePerHour: formData.pricePerHour
-      });
+
+    const newField: Field = {
+      id: editingField
+        ? editingField.id
+        : formData.id || `${formData.sportId}-${Date.now()}`,
+      name: formData.name,
+      sportId: formData.sportId,
+      description: formData.description,
+      image: formData.image,
+      images: formData.images,
+      features: formData.features,
+      pricePerHour: formData.pricePerHour,
+    };
+
+    if (editingField && editingField.id) {
+      updateField(editingField.id, newField);
     } else {
-      const newField: Field = {
-        id: formData.id || `${formData.sportId}-${Date.now()}`,
-        name: formData.name,
-        sportId: formData.sportId,
-        description: formData.description,
-        image: formData.image,
-        features: formData.features,
-        pricePerHour: formData.pricePerHour
-      };
       addField(newField);
     }
-    
+
     resetForm();
   };
 
   const handleScheduleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedField) return;
+    if (!selectedField || !selectedField.id) return;
 
     addTimeSlot({
       fieldId: selectedField.id,
@@ -121,20 +148,20 @@ export const FieldManagement: React.FC<FieldManagementProps> = ({ onBack }) => {
       price: scheduleForm.price,
       dayOfWeek: scheduleForm.dayOfWeek,
       isAvailable: true,
-      isActive: scheduleForm.isActive
+      isActive: scheduleForm.isActive,
     });
 
     resetScheduleForm();
   };
 
   const handleDelete = (field: Field) => {
-    if (confirm(`¿Estás seguro de eliminar la cancha "${field.name}"?`)) {
+    if (field.id && confirm(`¿Estás seguro de eliminar la cancha "${field.name}"?`)) {
       deleteField(field.id);
     }
   };
 
   const handleDeleteTimeSlot = (timeSlotId: string) => {
-    if (confirm('¿Estás seguro de eliminar este horario?')) {
+    if (confirm("¿Estás seguro de eliminar este horario?")) {
       deleteTimeSlot(timeSlotId);
     }
   };
@@ -143,28 +170,102 @@ export const FieldManagement: React.FC<FieldManagementProps> = ({ onBack }) => {
     if (newFeature.trim() && !formData.features.includes(newFeature.trim())) {
       setFormData({
         ...formData,
-        features: [...formData.features, newFeature.trim()]
+        features: [...formData.features, newFeature.trim()],
       });
-      setNewFeature('');
+      setNewFeature("");
     }
   };
 
   const removeFeature = (feature: string) => {
     setFormData({
       ...formData,
-      features: formData.features.filter(f => f !== feature)
+      features: formData.features.filter((f) => f !== feature),
     });
   };
 
+
   const getSportName = (sportId: string) => {
-    const sport = sports.find(s => s.id === sportId);
+    const sport = sports.find((s) => s.id === sportId);
     return sport ? sport.name : sportId;
   };
 
-  const filteredFields = selectedSport ? fields.filter(f => f.sportId === selectedSport) : fields;
+  const filteredFields = selectedSport
+    ? fields.filter((f) => f.sportId === selectedSport)
+    : fields;
 
-  // Schedule management view
-  if (currentView === 'schedules' && selectedField) {
+  // --- VIEWS ---
+  if (currentView === "details" && selectedField) {
+    return (
+      <FieldDetails
+        field={selectedField}
+        onBack={() => setCurrentView("list")}
+      />
+    );
+  }
+
+  if (currentView === "schedules" && selectedField && selectedField.id) {
+    const fieldTimeSlots = getFieldTimeSlots(selectedField.id);
+    return (
+      <div className="p-6 space-y-4">
+        <button
+          onClick={() => setCurrentView("list")}
+          className="flex items-center gap-2 text-blue-500 hover:underline"
+        >
+          <ArrowLeft size={20} /> Back
+        </button>
+        <h2 className="text-xl font-bold">{selectedField.name} Schedules</h2>
+
+        <form onSubmit={handleScheduleSubmit} className="space-y-2">
+          <input
+            type="time"
+            value={scheduleForm.startTime}
+            onChange={(e) =>
+              setScheduleForm({ ...scheduleForm, startTime: e.target.value })
+            }
+          />
+          <input
+            type="time"
+            value={scheduleForm.endTime}
+            onChange={(e) =>
+              setScheduleForm({ ...scheduleForm, endTime: e.target.value })
+            }
+          />
+          <input
+            type="number"
+            placeholder="Price"
+            value={scheduleForm.price}
+            onChange={(e) =>
+              setScheduleForm({
+                ...scheduleForm,
+                price: parseFloat(e.target.value),
+              })
+            }
+          />
+          <button
+            type="submit"
+            className="bg-blue-500 text-white px-4 py-1 rounded"
+          >
+            Add Time Slot
+          </button>
+        </form>
+
+        <ul>
+          {fieldTimeSlots.map((slot: TimeSlot) => (
+            <li key={slot.id} className="flex justify-between">
+              {slot.startTime} - {slot.endTime} (${slot.price}){" "}
+              <button
+                onClick={() => slot.id && handleDeleteTimeSlot(slot.id)}
+                className="text-red-500"
+              >
+                Delete
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }  // Schedule management view
+  if (currentView === 'schedules' && selectedField && selectedField.id) {
     const fieldTimeSlots = getFieldTimeSlots(selectedField.id);
 
     return (
@@ -298,7 +399,7 @@ export const FieldManagement: React.FC<FieldManagementProps> = ({ onBack }) => {
                       </div>
                     </div>
                     <button
-                      onClick={() => handleDeleteTimeSlot(slot.id)}
+                      onClick={() => slot.id && handleDeleteTimeSlot(slot.id)}
                       className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -540,7 +641,12 @@ export const FieldManagement: React.FC<FieldManagementProps> = ({ onBack }) => {
             
             <div className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-xl font-bold text-white">{field.name}</h3>
+                <h3
+                  className="text-xl font-bold text-white cursor-pointer hover:underline"
+                  onClick={() => handleViewDetails(field)}
+                >
+                  {field.name}
+                </h3>
                 <span className="text-green-400 font-bold">${field.pricePerHour}/hora</span>
               </div>
               
