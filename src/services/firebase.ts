@@ -76,6 +76,7 @@ export interface Field {
   sportId: string;
   description: string;
   image: string;
+  images: string[];
   features: string[];
   pricePerHour: number;
 }
@@ -85,11 +86,11 @@ export interface TimeSlot {
   fieldId: string;
   startTime: string; // Format: "HH:MM"
   endTime: string; // Format: "HH:MM"
+  price: number;
+  dayOfWeek: string;
+  isAvailable: boolean;
   isActive: boolean;
-  // Nuevos campos para compatibilidad con la lógica de reservas
   date?: string; // Fecha exacta (YYYY-MM-DD), opcional
-  allDays?: boolean; // Si aplica para todos los días
-  // Puedes eliminar dayOfWeek si ya no se usa
 }
 
 export interface Reservation {
@@ -439,6 +440,10 @@ export class DatabaseService {
             sportId: 'futbol',
             description: 'Cancha de fútbol 7 con césped artificial de alta calidad',
             image: 'https://images.pexels.com/photos/274506/pexels-photo-274506.jpeg',
+            images: [
+              'https://images.pexels.com/photos/274506/pexels-photo-274506.jpeg',
+              'https://images.pexels.com/photos/1171084/pexels-photo-1171084.jpeg',
+            ],
             features: ['Césped artificial', 'Iluminación LED', 'Zonas de descanso', 'Vestuarios'],
             pricePerHour: 50
           },
@@ -447,6 +452,7 @@ export class DatabaseService {
             sportId: 'futbol',
             description: 'Cancha de fútbol 5 con césped artificial',
             image: 'https://images.pexels.com/photos/1171084/pexels-photo-1171084.jpeg',
+            images: [],
             features: ['Césped artificial', 'Zonas de descanso'],
             pricePerHour: 35
           },
@@ -455,6 +461,7 @@ export class DatabaseService {
             sportId: 'baloncesto',
             description: 'Cancha profesional de baloncesto',
             image: 'https://images.pexels.com/photos/1752757/pexels-photo-1752757.jpeg',
+            images: [],
             features: ['Superficie acrílica', 'Tableros de cristal', 'Iluminación LED', 'Gradas'],
             pricePerHour: 40
           }
@@ -562,4 +569,4 @@ export class DatabaseService {
   }
 }
 
-export { db, auth }; 
+export { db, auth };
