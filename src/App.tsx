@@ -11,6 +11,7 @@ import { FieldList } from "./components/Sections/FieldList";
 import { FieldBooking } from "./components/Sections/FieldBooking";
 import { FieldDetails } from "./components/Sections/FieldDetails";
 import { Reservations } from "./components/Sections/Reservations";
+import { TournamentList } from "./components/Sections/TournamentList";
 import { Reports } from "./components/Sections/Reports";
 import { Contact } from "./components/Sections/Contact";
 import { Profile } from "./components/Sections/Profile";
@@ -200,6 +201,8 @@ function AppContent() {
         break;
       case "reservas":
         return <Reservations onSectionChange={handleSectionChange} />;
+      case "torneos":
+        return <TournamentList />;
       case "contacto":
         return <Contact />;
       case "perfil":

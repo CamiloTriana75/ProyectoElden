@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Calendar, BarChart3, Phone, User, Settings, LogOut, Users } from 'lucide-react';
+import { Home, Calendar, BarChart3, Phone, User, Settings, LogOut, Users, Trophy } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface SidebarProps {
@@ -11,6 +11,7 @@ const menuItems = [
   { id: 'inicio', label: 'Inicio', icon: Home },
   { id: 'canchas', label: 'Canchas', icon: Users },
   { id: 'reservas', label: 'Reservas', icon: Calendar },
+  { id: 'torneos', label: 'Torneos', icon: Trophy },
   { id: 'reportes', label: 'Reportes', icon: BarChart3 },
   { id: 'contacto', label: 'Contacto', icon: Phone },
   { id: 'perfil', label: 'Perfil', icon: User },
