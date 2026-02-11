@@ -53,6 +53,10 @@ interface DataContextType {
   updateReservation: (id: string, reservation: Partial<Reservation>) => Promise<void>;
   deleteReservation: (id: string) => Promise<void>;
   getAvailableTimeSlots: (fieldId: string, date: string) => TimeSlot[];
+
+  // UI state
+  selectedDate: string;
+  setSelectedDate: (date: string) => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -75,6 +79,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [fields, setFields] = useState<Field[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -114,20 +119,63 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           reservations: dbReservations.length
         });
 
+        // Normalizar canchas para que siempre tengan sportId/sport/price coherentes y usen el id del documento
+        const normalizedFields: Field[] = dbFields.map((field) => {
+          const matchingSport = dbSports.find((s) =>
+            s.id === field.sportId ||
+            (field.sport && s.name?.toLowerCase() === field.sport.toLowerCase())
+          );
+
+          const sportId = matchingSport?.id ?? field.sportId ?? field.sport ?? '';
+          const sport = matchingSport?.name ?? field.sport ?? field.sportId ?? '';
+          const pricePerHour = typeof field.pricePerHour === 'number' ? field.pricePerHour : typeof field.price === 'number' ? field.price : 0;
+          const price = typeof field.price === 'number' ? field.price : pricePerHour;
+
+          return {
+            ...field,
+            id: field.id || '',
+            sportId,
+            sport,
+            pricePerHour,
+            price,
+          };
+        });
+
+        // Normalizar reservas (corregir estados mal escritos como "earring" → "pending")
+        const normalizeReservation = (reservation: Reservation): Reservation => {
+          const normalizedStatus = (() => {
+            switch (reservation.status) {
+              case 'pending':
+              case 'confirmed':
+              case 'cancelled':
+              case 'completed':
+                return reservation.status;
+              case 'earring':
+              case 'earing':
+              case 'pendiente':
+                return 'pending';
+              default:
+                return 'pending';
+            }
+          })();
+
+          return { ...reservation, status: normalizedStatus };
+        };
+
         // Establecer datos
         setEmployees(dbEmployees);
         setPositions(dbPositions);
         setDocumentTypes(dbDocumentTypes);
         setPaymentMethods(dbPaymentMethods);
         setSports(dbSports);
-        setFields(dbFields);
+        setFields(normalizedFields);
         setTimeSlots(dbTimeSlots);
-        setReservations(dbReservations);
+        setReservations(dbReservations.map(normalizeReservation));
 
         // Configurar listeners en tiempo real
         const unsubscribeReservations = DatabaseService.onReservationsChange((newReservations) => {
           console.log('🔄 Reservations updated:', newReservations.length);
-          setReservations(newReservations);
+          setReservations(newReservations.map(normalizeReservation));
         });
 
         const unsubscribeTimeSlots = DatabaseService.onTimeSlotsChange((newTimeSlots) => {
@@ -332,11 +380,26 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Field management functions
+  const normalizeFieldWithSports = (field: Field): Field => {
+    const matchingSport = sports.find((s) =>
+      s.id === field.sportId ||
+      (field.sport && s.name?.toLowerCase() === field.sport.toLowerCase())
+    );
+
+    const sportId = matchingSport?.id ?? field.sportId ?? field.sport ?? '';
+    const sport = matchingSport?.name ?? field.sport ?? field.sportId ?? '';
+    const pricePerHour = typeof field.pricePerHour === 'number' ? field.pricePerHour : typeof field.price === 'number' ? field.price : 0;
+    const price = typeof field.price === 'number' ? field.price : pricePerHour;
+
+    return { ...field, sportId, sport, pricePerHour, price, id: field.id || '' };
+  };
+
   const addField = async (field: Field) => {
     try {
       const newField = await DatabaseService.add<Field>('fields', field);
-      setFields(prev => [...prev, newField]);
-      console.log('✅ Field added:', newField);
+      const normalized = normalizeFieldWithSports(newField);
+      setFields(prev => [...prev, normalized]);
+      console.log('✅ Field added:', normalized);
     } catch (error) {
       console.error('❌ Error adding field:', error);
       throw error;
@@ -346,7 +409,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateField = async (id: string, field: Partial<Field>) => {
     try {
       await DatabaseService.update<Field>('fields', id, field);
-      setFields(prev => prev.map(f => f.id === id ? { ...f, ...field } : f));
+      setFields(prev => prev.map(f => f.id === id ? normalizeFieldWithSports({ ...f, ...field, id: f.id }) : f));
       console.log('✅ Field updated:', id);
     } catch (error) {
       console.error('❌ Error updating field:', error);
@@ -568,7 +631,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addReservation,
       updateReservation,
       deleteReservation,
-      getAvailableTimeSlots
+      getAvailableTimeSlots,
+      selectedDate,
+      setSelectedDate
     }}>
       {children}
     </DataContext.Provider>

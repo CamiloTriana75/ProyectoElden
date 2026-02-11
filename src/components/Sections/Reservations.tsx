@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useData } from "../../contexts/DataContext";
 import { useAuth } from "../../contexts/AuthContext";
-import { CalendarView } from "./CalendarView";
+import { CalendarView } from "../calendar/CalendarView";
 
 interface ReservationsProps {
   onSectionChange?: (section: string) => void;
@@ -39,8 +39,25 @@ export const Reservations: React.FC<ReservationsProps> = ({
     return matchesStatus;
   });
 
-  const getStatusIcon = (status: string) => {
+  const normalizeStatus = (status: string) => {
     switch (status) {
+      case "confirmed":
+      case "pending":
+      case "cancelled":
+      case "completed":
+        return status;
+      case "earring":
+      case "earing":
+      case "pendiente":
+        return "pending";
+      default:
+        return "pending";
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    const normalized = normalizeStatus(status);
+    switch (normalized) {
       case "confirmed":
         return <CheckCircle className="w-5 h-5 text-green-500" />;
       case "pending":
@@ -53,20 +70,22 @@ export const Reservations: React.FC<ReservationsProps> = ({
   };
 
   const getStatusText = (status: string) => {
-    switch (status) {
+    const normalized = normalizeStatus(status);
+    switch (normalized) {
       case "confirmed":
-        return "Confirmada";
+        return "Confirmed";
       case "pending":
-        return "Pendiente";
+        return "Pending";
       case "cancelled":
-        return "Cancelada";
+        return "Cancelled";
       default:
-        return status;
+        return normalized;
     }
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
+    const normalized = normalizeStatus(status);
+    switch (normalized) {
       case "confirmed":
         return "text-green-400";
       case "pending":

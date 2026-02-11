@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Calendar, Clock } from 'lucide-react';
 import { Field } from '../../types';
 import { useData } from '../../contexts/DataContext';
@@ -14,19 +14,37 @@ interface FieldBookingProps {
 
 export const FieldBooking: React.FC<FieldBookingProps> = ({ field, onBack, onBookingComplete }) => {
   const { user } = useAuth();
-  const { addReservation, timeSlots, reservations } = useData();
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const { addReservation, timeSlots, reservations, selectedDate, setSelectedDate } = useData();
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
   const [isBooking, setIsBooking] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  const bookingDate = selectedDate || format(new Date(), 'yyyy-MM-dd');
+
   // Uso fallback para evitar undefined en field y slot
   const fieldId = field.id || '';
-  const allDaySlots = timeSlots.filter(ts => ts.fieldId === fieldId && ts.isActive && ((ts as any).allDays === true || (ts as any).date === selectedDate));
+
+  // Normalizamos slots para manejar ausencia de date/allDays
+  const normalizedSlots = useMemo(() => {
+    return timeSlots.map((ts) => {
+      const slotDate = (ts as any).date as string | undefined;
+      const allDays = (ts as any).allDays === true;
+      return { ...ts, date: slotDate, allDays } as TimeSlot & { date?: string; allDays?: boolean };
+    });
+  }, [timeSlots]);
+
+  const allDaySlots = useMemo(() => {
+    return normalizedSlots.filter((ts) => {
+      const matchesField = ts.fieldId === fieldId;
+      const matchesActive = ts.isActive;
+      const matchesDate = ts.allDays || !ts.date || ts.date === bookingDate;
+      return matchesField && matchesActive && matchesDate;
+    });
+  }, [normalizedSlots, fieldId, bookingDate]);
   
   // Defino el tipo local para los slots con price e isAvailable
   type SlotWithStatus = typeof allDaySlots[number] & { isAvailable: boolean; price: number };
-  const confirmedReservations = reservations.filter(r => r.fieldId === fieldId && r.date === selectedDate && r.status === 'confirmed');
+  const confirmedReservations = reservations.filter(r => r.fieldId === fieldId && r.date === bookingDate && r.status === 'confirmed');
   const slotsWithStatus: SlotWithStatus[] = allDaySlots.map(slot => {
     const isReserved = confirmedReservations.some(reservation => {
       const slotStart = slot.startTime || '';
@@ -35,8 +53,27 @@ export const FieldBooking: React.FC<FieldBookingProps> = ({ field, onBack, onBoo
       const reservationEnd = reservation.endTime || '';
       return slotStart < reservationEnd && slotEnd > reservationStart;
     });
-    return { ...slot, isAvailable: !isReserved, price: (slot as any).price || 0 };
+    const slotPrice = (slot as any).price as number | undefined;
+    const derivedPrice =
+      (typeof slotPrice === 'number' ? slotPrice : undefined) ??
+      (typeof field.pricePerHour === 'number' ? field.pricePerHour : undefined) ??
+      (typeof field.price === 'number' ? field.price : undefined) ??
+      0;
+    return { ...slot, isAvailable: !isReserved, price: derivedPrice };
   });
+
+  useEffect(() => {
+    console.log('📅 Booking date:', bookingDate);
+    console.log('🟢 Field id:', fieldId);
+    console.log('⏱️ Raw timeSlots:', timeSlots);
+    console.log('⏱️ Normalized slots:', normalizedSlots);
+    console.log('⏱️ Filtered slots for date:', bookingDate, allDaySlots);
+  }, [bookingDate, fieldId, timeSlots, normalizedSlots, allDaySlots]);
+
+  useEffect(() => {
+    // Clear selected slot if date changes to avoid stale selection
+    setSelectedTimeSlot(null);
+  }, [bookingDate]);
 
   const selectedSlot = slotsWithStatus.find(slot => slot.id === selectedTimeSlot) || null;
   
@@ -58,9 +95,20 @@ export const FieldBooking: React.FC<FieldBookingProps> = ({ field, onBack, onBoo
       return;
     }
     
-    // Check if slot is still available (double-check)
-    if (!selectedSlot.isAvailable) {
-      setValidationError('This time slot is no longer available');
+    // Check if slot is still available (double-check) and no overlapping reservation
+    const overlaps = reservations.some((reservation) => {
+      if (reservation.fieldId !== fieldId) return false;
+      if (reservation.date !== bookingDate) return false;
+      if (reservation.status === 'cancelled') return false;
+      const reservationStart = reservation.startTime || '';
+      const reservationEnd = reservation.endTime || '';
+      const slotStart = selectedSlot.startTime || '';
+      const slotEnd = selectedSlot.endTime || '';
+      return slotStart < reservationEnd && slotEnd > reservationStart;
+    });
+
+    if (!selectedSlot.isAvailable || overlaps) {
+      setValidationError('Este horario ya está reservado. Elige otro.');
       return;
     }
     
@@ -81,10 +129,10 @@ export const FieldBooking: React.FC<FieldBookingProps> = ({ field, onBack, onBoo
     addReservation({
       userId: user.id,
       fieldId: field.id,
-      date: selectedDate,
+      date: bookingDate,
       startTime: selectedSlot.startTime!,
       endTime: selectedSlot.endTime!,
-      totalPrice: selectedSlot.price,
+      totalPrice: selectedSlot.price ?? 0,
       paymentMethodId: 'default',
       status: 'pending',
     });
@@ -121,7 +169,7 @@ export const FieldBooking: React.FC<FieldBookingProps> = ({ field, onBack, onBoo
           <Calendar className="w-5 h-5 text-green-400" />
           <input
             type="date"
-            value={selectedDate}
+            value={bookingDate}
             onChange={(e) => setSelectedDate(e.target.value)}
             min={format(new Date(), 'yyyy-MM-dd')}
             className="bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:ring-2 focus:ring-green-500"
@@ -182,7 +230,7 @@ export const FieldBooking: React.FC<FieldBookingProps> = ({ field, onBack, onBoo
                 <div className="flex justify-between">
                   <span>Fecha:</span>
                   <span className="text-white font-medium">
-                    {format(new Date(selectedDate), 'dd MMMM yyyy', { locale: es })}
+                    {format(new Date(bookingDate), 'dd MMMM yyyy', { locale: es })}
                   </span>
                 </div>
                 <div className="flex justify-between">

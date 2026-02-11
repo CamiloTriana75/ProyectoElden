@@ -80,7 +80,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             value={value}
             locale="es-ES"
             tileClassName={tileClassName}
-            className="w-full bg-transparent border-none text-white"
+            className="w-full max-w-xl mx-auto bg-transparent border-none text-white"
           />
         </div>
 

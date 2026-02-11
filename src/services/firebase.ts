@@ -4,12 +4,12 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, si
 
 // Configuración de Firebase - NECESITAS REEMPLAZAR ESTO CON TUS PROPIAS CREDENCIALES
 const firebaseConfig = {
-  apiKey: "AIzaSyB7BcluSnhI8kO6qqOcF0n-cPR5L7-o74Y",
-  authDomain: "campos-deportivos-elden.firebaseapp.com",
-  projectId: "campos-deportivos-elden",
-  storageBucket: "campos-deportivos-elden.firebasestorage.app",
-  messagingSenderId: "912663528205",
-  appId: "1:912663528205:web:7ebd5cd92d91c2c827e644"
+  apiKey: "AIzaSyDuIZp_jqzjGYbz9tVfLpthPCLEMISwquo",
+  authDomain: "elden-reservations.firebaseapp.com",
+  projectId: "elden-reservations",
+  storageBucket: "elden-reservations.firebasestorage.app",
+  messagingSenderId: "268338523202",
+  appId: "1:268338523202:web:819944f7d18ba5397b51db"
 };
 
 // Inicializar Firebase
@@ -71,14 +71,17 @@ export interface Sport {
 }
 
 export interface Field {
-  id?: string;
+  id: string;
   name: string;
   sportId: string;
-  description: string;
-  image: string;
+  pricePerHour: number;
+  sport?: string;
+  price?: number;
+  description?: string;
+  image?: string;
   images: string[];
   features: string[];
-  pricePerHour: number;
+  createdAt?: any;
 }
 
 export interface TimeSlot {
@@ -115,6 +118,58 @@ export interface Message {
   status: 'read' | 'unread';
   createdAt?: any;
 }
+
+// Normalizes Field documents to ensure sport/price/id are always present
+const normalizeField = (data: any, id: string): Field => {
+  const sportId = typeof data?.sportId === 'string' ? data.sportId : typeof data?.sport === 'string' ? data.sport : '';
+  const sport = typeof data?.sport === 'string' ? data.sport : sportId;
+  const basePrice = typeof data?.price === 'number' ? data.price : undefined;
+  const perHour = typeof data?.pricePerHour === 'number' ? data.pricePerHour : undefined;
+  const pricePerHour = perHour ?? basePrice ?? 0;
+  const price = basePrice ?? perHour ?? 0;
+
+  return {
+    ...data,
+    id,
+    sport,
+    sportId,
+    price,
+    pricePerHour,
+    name: data?.name ?? 'Cancha',
+    description: data?.description ?? '',
+    image: data?.image ?? '',
+    images: Array.isArray(data?.images) ? data.images : [],
+    features: Array.isArray(data?.features) ? data.features : [],
+  };
+};
+
+// Ensures fields written to Firestore carry both sport + sportId and price aliases
+const prepareFieldForWrite = (data: Partial<Field>) => {
+  const sportId = typeof data.sportId === 'string' ? data.sportId : typeof data.sport === 'string' ? data.sport : '';
+  const sport = typeof data.sport === 'string' ? data.sport : sportId;
+  const price =
+    typeof data.price === 'number'
+      ? data.price
+      : typeof data.pricePerHour === 'number'
+      ? data.pricePerHour
+      : 0;
+  const pricePerHour =
+    typeof data.pricePerHour === 'number'
+      ? data.pricePerHour
+      : typeof data.price === 'number'
+      ? data.price
+      : 0;
+
+  return {
+    ...data,
+    sport,
+    sportId,
+    price,
+    pricePerHour,
+    images: Array.isArray(data?.images) ? data.images : [],
+    features: Array.isArray(data?.features) ? data.features : [],
+  };
+};
 
 // Servicio de autenticación
 export class AuthService {
@@ -171,9 +226,13 @@ export class DatabaseService {
   static async getAll<T>(collectionName: string): Promise<T[]> {
     try {
       const querySnapshot = await getDocs(collection(db, collectionName));
-      return querySnapshot.docs.map(doc => ({
+      if (collectionName === 'fields') {
+        return querySnapshot.docs.map((doc) => normalizeField(doc.data(), doc.id)) as T[];
+      }
+
+      return querySnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       })) as T[];
     } catch (error) {
       console.error(`Error getting all ${collectionName}:`, error);
@@ -187,6 +246,10 @@ export class DatabaseService {
       const docSnap = await getDoc(docRef);
       
       if (docSnap.exists()) {
+        if (collectionName === 'fields') {
+          return normalizeField(docSnap.data(), docSnap.id) as T;
+        }
+
         return {
           id: docSnap.id,
           ...docSnap.data()
@@ -202,13 +265,21 @@ export class DatabaseService {
 
   static async add<T>(collectionName: string, data: Omit<T, 'id' | 'createdAt'>): Promise<T> {
     try {
+      const baseData = collectionName === 'fields'
+        ? prepareFieldForWrite(data as Partial<Field>)
+        : data;
+
       const docData = {
-        ...data,
+        ...baseData,
         createdAt: serverTimestamp()
       };
       
       const docRef = await addDoc(collection(db, collectionName), docData);
       
+      if (collectionName === 'fields') {
+        return normalizeField(docData, docRef.id) as T;
+      }
+
       return {
         id: docRef.id,
         ...data
@@ -222,7 +293,10 @@ export class DatabaseService {
   static async update<T>(collectionName: string, id: string, data: Partial<T>): Promise<void> {
     try {
       const docRef = doc(db, collectionName, id);
-      await updateDoc(docRef, data as any);
+      const payload = collectionName === 'fields'
+        ? prepareFieldForWrite(data as Partial<Field>)
+        : data;
+      await updateDoc(docRef, payload as any);
     } catch (error) {
       console.error(`Error updating ${collectionName} with id ${id}:`, error);
       throw error;
