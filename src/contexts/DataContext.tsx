@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { DatabaseService, Employee, Position, DocumentType, PaymentMethod, Sport, Field, TimeSlot, Reservation } from '../services/firebase';
 import LoadingSpinner from '../components/Layout/LoadingSpinner';
 import { AuthService } from '../services/firebase';
+import { useAuth } from './AuthContext';
 
 interface DataContextType {
   // Employees
@@ -70,6 +71,7 @@ export const useData = () => {
 };
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   // State declarations
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
@@ -84,6 +86,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     console.log('🔧 Initializing DataContext...');
+
+    if (!user) {
+      // No intentes leer colecciones protegidas antes de autenticar.
+      setIsLoading(false);
+      return;
+    }
     
     const initializeData = async () => {
       try {
@@ -196,7 +204,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     initializeData();
-  }, []);
+  }, [user]);
 
   // Employee management functions
   const addEmployee = async (employee: Omit<Employee, 'id' | 'createdAt'> & { password: string }) => {

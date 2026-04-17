@@ -22,17 +22,18 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const shouldSeedFirebase = import.meta.env.VITE_ENABLE_FIREBASE_SEED === 'true';
 
   useEffect(() => {
     console.log('🔧 Initializing AuthContext...');
     
     const initializeAuth = async () => {
       try {
-        // Inicializar datos por defecto
-        await DatabaseService.initializeDefaultData();
-        
-        // Crear usuarios por defecto para iniciar sesión
-        await DatabaseService.createDefaultUsers();
+        if (shouldSeedFirebase) {
+          // Solo para desarrollo: evita intentos de escritura automatica en produccion.
+          await DatabaseService.initializeDefaultData();
+          await DatabaseService.createDefaultUsers();
+        }
         
         // Escuchar cambios en el estado de autenticación
         const unsubscribe = AuthService.onAuthStateChanged(async (firebaseUser) => {
@@ -70,7 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     initializeAuth();
-  }, []);
+  }, [shouldSeedFirebase]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
