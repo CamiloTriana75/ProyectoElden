@@ -2,15 +2,25 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, serverTimestamp } from 'firebase/firestore';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 
-// Configuración de Firebase - NECESITAS REEMPLAZAR ESTO CON TUS PROPIAS CREDENCIALES
+// Configuracion Firebase:
+// - Desarrollo local: usa .env
+// - Netlify: define las mismas variables en Site configuration > Environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyDuIZp_jqzjGYbz9tVfLpthPCLEMISwquo",
-  authDomain: "elden-reservations.firebaseapp.com",
-  projectId: "elden-reservations",
-  storageBucket: "elden-reservations.firebasestorage.app",
-  messagingSenderId: "268338523202",
-  appId: "1:268338523202:web:819944f7d18ba5397b51db"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDuIZp_jqzjGYbz9tVfLpthPCLEMISwquo",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "elden-reservations.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "elden-reservations",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "elden-reservations.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "268338523202",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:268338523202:web:819944f7d18ba5397b51db"
 };
+
+const usingFirebaseEnv = Boolean(import.meta.env.VITE_FIREBASE_API_KEY);
+
+if (!usingFirebaseEnv) {
+  console.warn(
+    'Using Firebase fallback config from source code. Configure VITE_FIREBASE_* variables for production deployments in Netlify.',
+  );
+}
 
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);

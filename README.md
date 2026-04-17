@@ -33,8 +33,8 @@ Real-time sports field reservation management system with Firebase database.
 
 3. **Configure Firebase**
    - Follow instructions in [FIREBASE_SETUP.md](./FIREBASE_SETUP.md)
-   - Copy `src/services/firebase.example.ts` as `src/services/firebase.ts`
-   - Replace configuration with your Firebase credentials
+   - Copy `.env.example` as `.env`
+   - Fill all `VITE_FIREBASE_*` values with your Firebase Web App credentials
 
 4. **Run the project**
    ```bash
@@ -52,7 +52,7 @@ Real-time sports field reservation management system with Firebase database.
 1. Create a project in [Firebase Console](https://console.firebase.google.com/)
 2. Enable Authentication (Email/Password)
 3. Create a Firestore database
-4. Copy configuration to `src/services/firebase.ts`
+4. Configure your `.env` with the Firebase values
 
 ## 👥 User Roles
 
@@ -111,8 +111,17 @@ If you had the previous version with IndexedDB:
 
 ### Netlify (Recommended)
 1. Connect your repository to Netlify
-2. Configure environment variables if needed
-3. Deploy automatically
+2. Configure build settings:
+   - Build command: `npm run build`
+   - Publish directory: `dist`
+3. Add these environment variables in Netlify:
+   - `VITE_FIREBASE_API_KEY`
+   - `VITE_FIREBASE_AUTH_DOMAIN`
+   - `VITE_FIREBASE_PROJECT_ID`
+   - `VITE_FIREBASE_STORAGE_BUCKET`
+   - `VITE_FIREBASE_MESSAGING_SENDER_ID`
+   - `VITE_FIREBASE_APP_ID`
+4. Deploy automatically
 
 ### Vercel
 1. Connect your repository to Vercel
@@ -128,7 +137,7 @@ If you had the previous version with IndexedDB:
 ## 🐛 Troubleshooting
 
 ### Firebase Configuration Error
-- Verify that `src/services/firebase.ts` has correct configuration
+- Verify that `.env` (local) or Netlify environment variables (production) are correctly configured
 - Ensure Authentication is enabled
 - Verify Firestore is created
 
