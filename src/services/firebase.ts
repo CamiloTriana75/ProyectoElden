@@ -193,13 +193,23 @@ export class AuthService {
         ...userData,
         createdAt: serverTimestamp()
       };
-      
-      const docRef = await addDoc(collection(db, 'users'), userDoc);
-      
-      return {
-        id: docRef.id,
-        ...userData
-      };
+
+      try {
+        const docRef = await addDoc(collection(db, 'users'), userDoc);
+
+        return {
+          id: docRef.id,
+          ...userData
+        };
+      } catch (firestoreError) {
+        console.warn('User created in Firebase Auth but profile write to Firestore failed:', firestoreError);
+
+        // Keep the auth flow alive even if Firestore rules are still being adjusted.
+        return {
+          id: userCredential.user.uid,
+          ...userData,
+        };
+      }
     } catch (error) {
       console.error('Error registering user:', error);
       throw error;
@@ -343,6 +353,13 @@ export class DatabaseService {
       
       return null;
     } catch (error) {
+      const firestoreCode = (error as { code?: string } | null)?.code;
+
+      if (firestoreCode === 'permission-denied') {
+        console.warn('Permission denied reading users profile. Falling back to auth-only profile.');
+        return null;
+      }
+
       console.error('Error getting user by email:', error);
       throw error;
     }

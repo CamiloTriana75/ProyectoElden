@@ -4,6 +4,107 @@ import LoadingSpinner from '../components/Layout/LoadingSpinner';
 import { AuthService } from '../services/firebase';
 import { useAuth } from './AuthContext';
 
+const fallbackDocumentTypes: DocumentType[] = [
+  { id: 'CC', code: 'CC', name: 'Cedula de ciudadania' },
+  { id: 'TI', code: 'TI', name: 'Tarjeta de identidad' },
+  { id: 'CE', code: 'CE', name: 'Cedula de extranjeria' },
+  { id: 'PA', code: 'PA', name: 'Pasaporte' },
+];
+
+const demoPositions: Position[] = [
+  { id: 'pos-admin', name: 'Administrador', description: 'Gestion total del sistema' },
+  { id: 'pos-recep', name: 'Recepcionista', description: 'Atencion de reservas y clientes' },
+];
+
+const demoPaymentMethods: PaymentMethod[] = [
+  { id: 'pm-cash', name: 'Efectivo', description: 'Pago presencial', isActive: true },
+  { id: 'pm-card', name: 'Tarjeta', description: 'Debito o credito', isActive: true },
+  { id: 'pm-pse', name: 'PSE', description: 'Pago en linea', isActive: true },
+];
+
+const demoSports: Sport[] = [
+  { id: 'futbol', name: 'Futbol', icon: '⚽', color: 'bg-green-500' },
+  { id: 'baloncesto', name: 'Baloncesto', icon: '🏀', color: 'bg-orange-500' },
+  { id: 'padel', name: 'Padel', icon: '🏓', color: 'bg-blue-500' },
+];
+
+const demoFields: Field[] = [
+  {
+    id: 'field-1',
+    name: 'Cancha Sintetica Norte',
+    sportId: 'futbol',
+    sport: 'Futbol',
+    pricePerHour: 90000,
+    price: 90000,
+    description: 'Cancha 7v7 con iluminacion LED',
+    image: 'https://images.pexels.com/photos/274506/pexels-photo-274506.jpeg',
+    images: ['https://images.pexels.com/photos/274506/pexels-photo-274506.jpeg'],
+    features: ['Iluminacion', 'Graderia', 'Parqueadero'],
+  },
+  {
+    id: 'field-2',
+    name: 'Cancha Multiuso Sur',
+    sportId: 'baloncesto',
+    sport: 'Baloncesto',
+    pricePerHour: 70000,
+    price: 70000,
+    description: 'Superficie profesional indoor',
+    image: 'https://images.pexels.com/photos/1752757/pexels-photo-1752757.jpeg',
+    images: ['https://images.pexels.com/photos/1752757/pexels-photo-1752757.jpeg'],
+    features: ['Cubierta', 'Marcador digital'],
+  },
+];
+
+const demoTimeSlots: TimeSlot[] = [
+  {
+    id: 'slot-1',
+    fieldId: 'field-1',
+    startTime: '18:00',
+    endTime: '19:00',
+    price: 90000,
+    dayOfWeek: 'Lunes',
+    isAvailable: true,
+    isActive: true,
+  },
+  {
+    id: 'slot-2',
+    fieldId: 'field-1',
+    startTime: '19:00',
+    endTime: '20:00',
+    price: 90000,
+    dayOfWeek: 'Lunes',
+    isAvailable: true,
+    isActive: true,
+  },
+];
+
+const demoEmployees: Employee[] = [
+  {
+    id: 'emp-1',
+    name: 'Laura Gomez',
+    email: 'laura@elden.com',
+    phone: '+57 300 555 1111',
+    positionId: 'pos-recep',
+    documentType: 'CC',
+    documentNumber: '10203040',
+    isActive: true,
+  },
+];
+
+const demoReservations: Reservation[] = [
+  {
+    id: 'res-1',
+    userId: 'demo-client-1',
+    fieldId: 'field-1',
+    date: new Date().toISOString().slice(0, 10),
+    startTime: '20:00',
+    endTime: '21:00',
+    totalPrice: 90000,
+    paymentMethodId: 'pm-card',
+    status: 'confirmed',
+  },
+];
+
 interface DataContextType {
   // Employees
   employees: Employee[];
@@ -72,6 +173,7 @@ export const useData = () => {
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
+  const isDemoAdmin = user?.email === 'demo.admin@elden.com' && user?.role === 'admin';
   // State declarations
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
@@ -87,21 +189,23 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     console.log('🔧 Initializing DataContext...');
 
-    if (!user) {
-      // Permite cargar catalogos necesarios para registro sin sesion.
-      const initializePublicData = async () => {
-        try {
-          const dbDocumentTypes = await DatabaseService.getAll<DocumentType>('documentTypes');
-          setDocumentTypes(dbDocumentTypes);
-        } catch (error) {
-          console.error('❌ Error loading public document types:', error);
-          setDocumentTypes([]);
-        } finally {
-          setIsLoading(false);
-        }
-      };
+    if (isDemoAdmin) {
+      setEmployees(demoEmployees);
+      setPositions(demoPositions);
+      setDocumentTypes(fallbackDocumentTypes);
+      setPaymentMethods(demoPaymentMethods);
+      setSports(demoSports);
+      setFields(demoFields);
+      setTimeSlots(demoTimeSlots);
+      setReservations(demoReservations);
+      setIsLoading(false);
+      return;
+    }
 
-      initializePublicData();
+    if (!user) {
+      // Antes de login usa catalogo local para evitar errores de permisos de Firestore.
+      setDocumentTypes(fallbackDocumentTypes);
+      setIsLoading(false);
       return;
     }
     
@@ -216,7 +320,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     initializeData();
-  }, [user]);
+  }, [user, isDemoAdmin]);
 
   // Employee management functions
   const addEmployee = async (employee: Omit<Employee, 'id' | 'createdAt'> & { password: string }) => {

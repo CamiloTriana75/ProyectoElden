@@ -14,6 +14,7 @@ declare global {
       showInfo: () => Promise<void>;
       reset: () => Promise<void>;
       createEmployee: (employeeData: any) => Promise<void>;
+      createAdmin: (adminData: any) => Promise<void>;
     };
   }
 }
@@ -89,6 +90,30 @@ window.eldenDB = {
     } catch (error) {
       console.error('❌ Error creating employee:', error);
     }
+  },
+  createAdmin: async (adminData) => {
+    console.log('👑 Creating admin from console...', adminData);
+
+    try {
+      const adminEmail = adminData.email || 'admin.demo@elden.com';
+      const adminPassword = adminData.password || 'Admin123!';
+
+      const createdAdmin = await AuthService.register(adminEmail, adminPassword, {
+        name: adminData.name || 'Administrador Demo',
+        email: adminEmail,
+        phone: adminData.phone || '+57 300 000 0000',
+        documentType: adminData.documentType || 'CC',
+        documentNumber: adminData.documentNumber || '1000000000',
+        role: 'admin',
+      });
+
+      console.log('✅ Admin created:', createdAdmin);
+      console.log('📧 Login credentials:');
+      console.log(`   Email: ${adminEmail}`);
+      console.log(`   Password: ${adminPassword}`);
+    } catch (error) {
+      console.error('❌ Error creating admin:', error);
+    }
   }
 };
 
@@ -99,6 +124,8 @@ console.log('• window.eldenDB.showInfo() - Mostrar información');
 console.log('• window.eldenDB.reset() - Reinicializar base de datos');
 console.log('• window.eldenDB.createEmployee(data) - Crear empleado');
 console.log('  Ejemplo: window.eldenDB.createEmployee({name: "Juan Pérez", email: "juan@elden.com"})');
+console.log('• window.eldenDB.createAdmin(data) - Crear administrador');
+console.log('  Ejemplo: window.eldenDB.createAdmin({name: "Admin", email: "admin@elden.com", password: "Admin123!"})');
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

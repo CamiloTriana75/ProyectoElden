@@ -11,7 +11,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   onSwitchToRegister,
   onClose,
 }) => {
-  const { login } = useAuth();
+  const { login, loginAsDemoAdmin } = useAuth();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +28,31 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       else setError("Credenciales inválidas");
     } catch {
       setError("Error al iniciar sesión");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFirebaseAdminLogin = async () => {
+    setIsLoading(true);
+    setError("");
+
+    const email = "admin2@elden.com";
+    const password = "Admin123!";
+
+    setFormData({ email, password });
+
+    try {
+      const success = await login(email, password);
+      if (success) {
+        onClose();
+      } else {
+        setError(
+          "No se pudo iniciar con admin Firebase. Si no existe aun, crea el usuario con window.eldenDB.createAdmin({...})"
+        );
+      }
+    } catch {
+      setError("Error al iniciar con admin Firebase");
     } finally {
       setIsLoading(false);
     }
@@ -118,6 +143,37 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
         </button>
       </form>
+
+      <div className="mt-4">
+        <button
+          type="button"
+          onClick={handleFirebaseAdminLogin}
+          disabled={isLoading}
+          className="w-full py-2.5 rounded-md font-medium text-white bg-sky-600 hover:bg-sky-700 transition disabled:opacity-60"
+        >
+          Entrar con Admin Firebase
+        </button>
+        <div className="mt-2 rounded-md bg-sky-50 border border-sky-200 px-3 py-2 text-xs text-sky-900">
+          Usuario: admin2@elden.com | Clave: Admin123!
+        </div>
+      </div>
+
+      <div className="mt-3">
+        <button
+          type="button"
+          onClick={() => {
+            setError("");
+            loginAsDemoAdmin();
+            onClose();
+          }}
+          className="w-full py-2.5 rounded-md font-medium text-gray-800 bg-amber-300 hover:bg-amber-400 transition"
+        >
+          Entrar como Admin Demo
+        </button>
+        <p className="text-xs text-gray-500 text-center mt-2">
+          Acceso de solo demostracion con datos de muestra
+        </p>
+      </div>
 
       {/* Footer */}
       <div className="mt-5 text-center text-sm text-gray-600">

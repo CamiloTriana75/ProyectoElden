@@ -4,6 +4,7 @@ import { AuthService, DatabaseService, User } from '../services/firebase';
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
+  loginAsDemoAdmin: () => void;
   register: (name: string, email: string, password: string, phone: string, documentType?: string, documentNumber?: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
@@ -22,7 +23,16 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDemoSession, setIsDemoSession] = useState(false);
   const shouldSeedFirebase = import.meta.env.VITE_ENABLE_FIREBASE_SEED === 'true';
+
+  const buildFallbackUser = (email: string): User => ({
+    id: email,
+    name: email.split('@')[0] || 'Usuario',
+    email,
+    phone: '',
+    role: 'client',
+  });
 
   useEffect(() => {
     console.log('🔧 Initializing AuthContext...');
@@ -37,23 +47,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Escuchar cambios en el estado de autenticación
         const unsubscribe = AuthService.onAuthStateChanged(async (firebaseUser) => {
+          if (isDemoSession) {
+            setIsLoading(false);
+            return;
+          }
+
           console.log('👤 Auth state changed:', firebaseUser?.email);
           
           if (firebaseUser) {
+            const email = firebaseUser.email || '';
+
+            if (!email) {
+              setUser(null);
+              setIsLoading(false);
+              return;
+            }
+
             try {
               // Obtener datos del usuario desde Firestore
-              const userData = await DatabaseService.getUserByEmail(firebaseUser.email!);
+              const userData = await DatabaseService.getUserByEmail(email);
               if (userData) {
                 console.log('✅ User data retrieved:', userData);
                 setUser(userData);
               } else {
-                console.log('⚠️ User not found in Firestore, logging out');
-                await AuthService.logout();
-                setUser(null);
+                console.warn('⚠️ User profile not found in Firestore, using fallback user');
+                setUser(buildFallbackUser(email));
               }
             } catch (error) {
-              console.error('❌ Error getting user data:', error);
-              setUser(null);
+              console.warn('⚠️ Could not load Firestore profile, using Auth fallback user');
+              setUser(buildFallbackUser(email));
             }
           } else {
             console.log('👤 No user logged in');
@@ -71,11 +93,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     initializeAuth();
-  }, [shouldSeedFirebase]);
+  }, [shouldSeedFirebase, isDemoSession]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       console.log('🚀 Attempting login for:', email);
+      setIsDemoSession(false);
       
       // Intentar login con Firebase Auth
       await AuthService.login(email, password);
@@ -89,17 +112,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginAsDemoAdmin = () => {
+    setIsDemoSession(true);
+    setUser({
+      id: 'demo-admin',
+      name: 'Admin Demo',
+      email: 'demo.admin@elden.com',
+      phone: '+57 300 000 0000',
+      role: 'admin',
+    });
+    setIsLoading(false);
+  };
+
   const register = async (name: string, email: string, password: string, phone: string, documentType?: string, documentNumber?: string): Promise<boolean> => {
     try {
       console.log('🚀 Starting registration for:', email);
       console.log('📝 Registration data:', { name, email, phone, documentType, documentNumber });
-      
-      // Verificar si el usuario ya existe
-      const existingUser = await DatabaseService.getUserByEmail(email);
-      if (existingUser) {
-        console.log('⚠️ User already exists:', email);
-        return false;
-      }
+      setIsDemoSession(false);
       
       // Crear usuario en Firebase Auth y Firestore
       const userData: Omit<User, 'id' | 'createdAt'> = {
@@ -125,7 +154,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       console.log('🚪 Logging out...');
-      await AuthService.logout();
+      if (!isDemoSession) {
+        await AuthService.logout();
+      }
+      setIsDemoSession(false);
       setUser(null);
       console.log('✅ Logout successful');
     } catch (error) {
@@ -134,7 +166,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, loginAsDemoAdmin, register, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
