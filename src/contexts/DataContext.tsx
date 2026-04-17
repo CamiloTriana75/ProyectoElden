@@ -88,8 +88,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('🔧 Initializing DataContext...');
 
     if (!user) {
-      // No intentes leer colecciones protegidas antes de autenticar.
-      setIsLoading(false);
+      // Permite cargar catalogos necesarios para registro sin sesion.
+      const initializePublicData = async () => {
+        try {
+          const dbDocumentTypes = await DatabaseService.getAll<DocumentType>('documentTypes');
+          setDocumentTypes(dbDocumentTypes);
+        } catch (error) {
+          console.error('❌ Error loading public document types:', error);
+          setDocumentTypes([]);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      initializePublicData();
       return;
     }
     
